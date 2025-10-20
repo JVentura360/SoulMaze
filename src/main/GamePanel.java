@@ -29,7 +29,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
     private boolean gameOverShown = false;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(1280, 800));
+        setPreferredSize(new Dimension(1200, 800));
         setBackground(Color.black);
         setFocusable(true);
         addKeyListener(this);
@@ -111,8 +111,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
         // collect open tiles
         List<int[]> openTiles = new ArrayList<>();
         for (int r = 0; r < maze.mazeData.length; r++) {
-            for (int c = 0; c < maze.mazeData[0].length; c++) {
-                if (maze.mazeData[r][c] == 0) openTiles.add(new int[]{r, c});
+            for (int c = 0; c < maze.mazeData[0].length(); c++) {
+                if (maze.mazeData[r].charAt(c) == ' ') openTiles.add(new int[]{r, c});
             }
         }
         Collections.shuffle(openTiles, rnd);
