@@ -6,8 +6,8 @@ public class GameMain {
 
 	public static void main(String[] args) {
 		JFrame frame = new JFrame("Soul Maze");
-        GamePanel panel = new GamePanel();
-        frame.add(panel);
+        MainMenu mainMenu = new MainMenu(frame);
+        frame.add(mainMenu);
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
