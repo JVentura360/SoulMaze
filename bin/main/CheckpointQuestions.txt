@@ -1,0 +1,201 @@
+1) Capital of France? - Paris
+2) Largest planet in the Solar System? - Jupiter
+3) Fastest land animal? - Cheetah
+4) Longest river? - Nile
+5) Tallest mountain? - Everest
+6) Hardest natural substance? - Diamond
+7) Primary language of Brazil? - Portuguese
+8) Currency of Japan? - Yen
+9) Largest ocean? - Pacific Ocean or Pacific
+10) Hottest planet? - Venus
+11) Coldest continent? - Antarctica
+12) Most abundant gas in air? - Nitrogen
+13) Human body's largest organ? - Skin
+14) Red planet? - Mars
+15) Closest star to Earth? - Sun
+16) Largest mammal? - Blue Whale
+17) Smallest prime number? - Two or 2
+18) Chemical symbol for water? - H2O
+19) Square root of 81? - Nine or 9
+20) Roman numeral for 100? - C
+21) Opposite of north? - South
+22) Continent with Sahara? - Africa
+23) Author of Hamlet? - Shakespeare
+24) Painter of Mona Lisa? - Da Vinci
+25) Language of Madrid? - Spanish
+26) Capital of Italy? - Rome
+27) Fastest bird? - Peregrine
+28) Heaviest noble gas? - Radon
+29) Metal liquid at room temp? - Mercury
+30) Planet with rings? - Saturn
+31) Largest desert? - Antarctica
+32) Tallest animal? - Giraffe
+33) Biggest bone? - Femur
+34) Five-sided shape? - Pentagon
+35) One primary color? - Red
+36) Second primary color? - Blue
+37) Third primary color? - Yellow
+38) Opposite of hot? - Cold
+39) Opposite of day? - Night
+40) Binary for two? - 00000010
+41) Capital of Canada? - Ottawa
+42) Currency of UK? - Pound
+43) Capital of Germany? - Berlin
+44) Capital of Russia? - Moscow
+45) Capital of China? - Beijing
+46) Capital of India? - New Delhi
+47) Capital of Australia? - Canberra
+48) Capital of Mexico? - Mexico City
+49) Capital of Spain? - Madrid
+50) Capital of Egypt? - Cairo
+51) Largest country by area? - Russia
+52) Most spoken language? - English
+53) Internet prefix for secure? - HTTPS
+54) CPU stands for? - Central Processing Unit
+55) GPU stands for? - Graphics Processing Unit
+56) RAM stands for? - Random Access Memory
+57) HTTP stands for? - Hypertext Transfer Protocol
+58) USB stands for? - Universal Serial Bus
+59) AI stands for? - Artificial Intelligence
+60) LED stands for? - Light Emitting Diode
+61) DNA stands for? - Deoxyribonucleic Acid
+62) RNA stands for? - Ribonucleic Acid
+63) Photosynthesis gas intake? - Carbon Dioxide
+64) Photosynthesis gas release? - Oxygen
+65) Boiling point of water (C)? - One Hundred or 100
+66) Freezing point of water (C)? - Zero or 0
+67) Largest rainforest? - Amazon Forest or Amazon
+68) Earth's shape? - Oblate Spheroid
+69) Animal that lays eggs? - Platypus
+70) Insect with honey? - Bee
+71) Mammal that flies? - Bat
+72) Planet furthest from Sun? - Neptune
+73) Galaxy we live in? - Milky Way
+74) Center of an atom? - Nucleus
+75) Charge of electron? - Negative
+76) Charge of proton? - Positive
+77) Neutral particle? - Neutron
+78) Study of earthquakes? - Seismology
+79) Study of life? - Biology
+80) Study of stars? - Astronomy
+81) Study of rocks? - Geology
+82) Study of mind? - Psychology
+83) Water's chemical state at 25C? - Liquid
+84) Opposite of increase? - Decrease
+85) Opposite of early? - Late
+86) Opposite of empty? - Full
+87) Opposite of strong? - Weak
+88) Opposite of begin? - End
+89) Opposite of open? - Closed
+90) Opposite of above? - Below
+91) Synonym of quick? - Fast
+92) Synonym of small? - Tiny
+93) Synonym of large? - Big
+94) Synonym of happy? - Joyful
+95) Synonym of clever? - Smart
+96) Antonym of light? - Dark
+97) Antonym of noisy? - Quiet
+98) Antonym of love? - Hate
+99) Antonym of narrow? - Wide
+100) Antonym of accept? - Reject
+101) Shape with three sides? - Triangle
+102) Shape with six sides? - Hexagon
+103) Shape with eight sides? - Octagon
+104) Shape with four equal sides? - Square
+105) Number of continents? - Seven or 7
+106) Days in a leap year? - 366 Days or 336
+107) Months in a year? - Twelve or 12
+108) Hours in a day? - Twenty Four or 24
+109) Minutes in an hour? - Sixty or 60
+110) Seconds in a minute? - Sixty or 60
+111) Largest internal organ? - Liver
+112) Blood's red pigment? - Hemoglobin
+113) Blood type universal donor? - O Negative or O-
+114) Blood type universal recipient? - AB Positive or AB-
+115) Sense organ for smell? - Nose
+116) Sense organ for hearing? - Ear
+117) Sense organ for vision? - Eye
+118) Sense organ for taste? - Tongue
+119) Sense organ for touch? - Skin
+120) Gas used in balloons? - Helium
+121) Gas for respiration? - Oxygen
+122) Earth's natural satellite? - Moon
+123) First man on Moon? - Neil Armstrong
+124) Largest coral reef? - Great Barrier
+125) Tallest waterfall? - Angel Falls
+126) Largest lake? - Caspian
+127) Deepest ocean trench? - Mariana or Mariana's Trench
+128) Longest mountain range? - Andes or Andes Mountains
+129) Biggest ocean current? - Gulf Stream
+130) Largest island? - Greenland
+131) Most populous country? - India
+132) Most populous city? - Tokyo
+133) Pi (2dp)? - 3.14
+134) Atomic number of carbon? - 6
+135) Speed of light (km/s)? - 300000
+136) H2SO4 name? - Sulfuric Acid
+137) NaCl common name? - Salt
+138) Gas plants absorb? - CO2
+139) Unit of force? - Newton
+140) SI unit of current? - Ampere
+141) Layer under crust? - Mantle
+142) DNA shape? - Double Helix
+143) Blood sugar molecule? - Glucose
+144) Memory brain region? - Hippocampus
+145) Largest moon's planet? - Jupiter
+146) Photosynthesis site? - Chloroplast
+147) Basic unit of life? - Cell
+148) Sun's primary fuel? - Hydrogen
+149) Opposite charges? - Attract
+150) Neutral pH value? - 7
+151) Number base of binary? - Two
+152) 12 × 12? - 144
+153) Prime after 13? - 17
+154) Smallest even prime? - 2
+155) 2^5? - 32
+156) Square of 15? - 225
+157) Cube root of 27? - 3
+158) Avogadro's number? - 6.022e23
+159) Symbol for gold? - Au
+160) Noble gas Z=18? - Argon
+161) Adult teeth count? - 32
+162) Heart chambers? - Four
+163) Cervical vertebrae? - Seven
+164) Planck constant symbol? - h
+165) Gravity (m/s^2)? - 9.8
+166) Largest Philippine island? - Luzon
+167) Philippine national hero? - Rizal
+168) Philippine national language? - Filipino
+169) Philippine currency? - Peso
+170) Longest Philippine river? - Cagayan
+171) Highest Philippine mountain? - Apo
+172) Major Philippine religion? - Catholicism
+173) Largest Philippine bay? - Manila Bay
+174) Visayas largest island? - Samar
+175) Mindanao largest city? - Davao
+176) Philippines timezone? - PHT
+177) Philippines calling code? - +63
+178) Philippines ISO code? - PH
+179) Independence month (PH)? - June
+180) Philippine national flower? - Sampaguita
+181) Philippine national tree? - Narra
+182) Philippine national fish? - Bangus
+183) Philippine national bird? - Eagle
+184) Manila's main river? - Pasig
+185) Chocolate Hills island? - Bohol
+186) Mayon Volcano province? - Albay
+187) Rice terraces province? - Ifugao
+188) Tubbataha location? - Sulu Sea
+189) Historic walled city? - Intramuros
+190) San Juanico strait links? - Samar-Leyte
+191) Tallest PH waterfall? - Limunsudan
+192) Lupang Hinirang composer? - Julian Felipe
+193) First Philippine president? - Aguinaldo
+194) Oldest PH university? - Santo Tomas
+195) PH financial hub? - Makati
+196) Philippine internet ccTLD? - .ph
+197) Luzon volcano lake? - Taal
+198) Largest PH lake area? - Laguna Bay
+199) National martial art? - Arnis
+200) Filipino word for hello? - Kumusta
+
