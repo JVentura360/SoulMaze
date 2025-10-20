@@ -62,4 +62,8 @@ public class Player {
         if (k == KeyEvent.VK_A || k == KeyEvent.VK_LEFT) left = false;
         if (k == KeyEvent.VK_D || k == KeyEvent.VK_RIGHT) right = false;
     }
+
+    public void stop() {
+        up = down = left = right = false;
+    }
 }

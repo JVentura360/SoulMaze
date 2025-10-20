@@ -26,6 +26,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
     private boolean awaitingAnswer = false;
     private Checkpoint activeCheckpoint = null;
     private JDialog activeDialog = null;
+    private boolean gameOverShown = false;
 
     public GamePanel() {
         setPreferredSize(new Dimension(1280, 800));
@@ -73,6 +74,10 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
                 }
                 awaitingAnswer = false;
                 activeCheckpoint = null;
+                if (!gameOverShown) {
+                    gameOverShown = true;
+                    SwingUtilities.invokeLater(this::showGameOverDialog);
+                }
             }
         }
     }
@@ -250,8 +255,63 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
             ActionMap am = root.getActionMap();
             im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "noop");
             am.put("noop", new AbstractAction() { public void actionPerformed(java.awt.event.ActionEvent e) {} });
+            // Enter submits
+            root.setDefaultButton(submit);
+            // Clear any stuck movement and open dialog
+            player.stop();
             activeDialog = dialog;
             dialog.setVisible(true);
+            });
+    }
+
+    private void showGameOverDialog() {
+        java.awt.Window parent = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(parent, "Game Over", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
+        JPanel panel = new JPanel(new BorderLayout(10,10));
+        JLabel msg = new JLabel("GAME OVER");
+        msg.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel buttons = new JPanel();
+        JButton retry = new JButton("Play Again");
+        JButton close = new JButton("Close");
+        buttons.add(retry);
+        buttons.add(close);
+        panel.add(msg, BorderLayout.CENTER);
+        panel.add(buttons, BorderLayout.SOUTH);
+
+        retry.addActionListener(e -> {
+            dialog.dispose();
+            resetGame();
         });
+        close.addActionListener(e -> {
+            try {
+                if (parent instanceof java.awt.Window) ((java.awt.Window) parent).dispose();
+            } catch (Exception ignore) {}
+            System.exit(0);
+        });
+
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parent);
+        dialog.getRootPane().setDefaultButton(retry);
+        dialog.setVisible(true);
+    }
+
+    private void resetGame() {
+        // reset flags
+        gameOver = false;
+        gameOverShown = false;
+        awaitingAnswer = false;
+        activeCheckpoint = null;
+        // reset entities
+        player.x = 640; player.y = 420;
+        ghost.x = 40; ghost.y = 150;
+        player.stop();
+        // regenerate checkpoints
+        checkpoints.clear();
+        initCheckpoints();
+        // return keyboard focus to game panel
+        requestFocusInWindow();
     }
 }
