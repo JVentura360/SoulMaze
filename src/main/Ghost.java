@@ -5,17 +5,19 @@ import java.util.*;
 
 
 public class Ghost {
-    public int x, y;
-    public int speed = 2;
+	public double x, y; // use double for smooth motion
+    public double speed = 2.0;
     public int size = 25;
     private Color color = Color.RED;
     private Maze maze;
 
-    // path (tile coordinates)
     private int[] pathRow, pathCol;
     private int pathIndex = 0;
     private long lastPathUpdate = 0;
     private Random rnd = new Random();
+
+    // smoothing memory
+    private double vx = 0, vy = 0;
 
     public Ghost(int x, int y, Maze maze) {
         this.x = x;
@@ -26,83 +28,98 @@ public class Ghost {
     public void update(Player player) {
         int tileSize = maze.tileSize;
 
-        int ghostRow = (y + size/2) / tileSize; // use center for tile mapping
-        int ghostCol = (x + size/2) / tileSize;
-        int playerRow = (player.y + player.size/2) / tileSize;
-        int playerCol = (player.x + player.size/2) / tileSize;
+        int ghostRow = (int) ((y + size / 2) / tileSize);
+        int ghostCol = (int) ((x + size / 2) / tileSize);
+        int playerRow = (player.y + player.size / 2) / tileSize;
+        int playerCol = (player.x + player.size / 2) / tileSize;
 
-        // Only recompute path when needed (or player moved to another tile)
         boolean needRecalc = false;
-        if (pathRow == null) needRecalc = true;
-        else if (pathIndex >= pathRow.length) needRecalc = true;
+
+        if (pathRow == null || pathIndex >= pathRow.length)
+            needRecalc = true;
         else {
-            // if player moved to a new tile, recompute
-            int currentGoalRow = pathRow[pathRow.length-1];
-            int currentGoalCol = pathCol[pathCol.length-1];
-            if (currentGoalRow != playerRow || currentGoalCol != playerCol) needRecalc = true;
+            int goalR = pathRow[pathRow.length - 1];
+            int goalC = pathCol[pathCol.length - 1];
+            if (goalR != playerRow || goalC != playerCol)
+                needRecalc = true;
         }
 
-        if (System.currentTimeMillis() - lastPathUpdate > 250) needRecalc = true;
+        if (System.currentTimeMillis() - lastPathUpdate > 400)
+            needRecalc = true;
 
         if (needRecalc) {
             computePath(ghostRow, ghostCol, playerRow, playerCol);
             lastPathUpdate = System.currentTimeMillis();
         }
 
-        // follow path if exists
+        // smooth following
         if (pathRow != null && pathIndex < pathRow.length) {
             int targetTileRow = pathRow[pathIndex];
             int targetTileCol = pathCol[pathIndex];
-            int targetX = targetTileCol * tileSize + (tileSize - size)/2; // center ghost in tile
-            int targetY = targetTileRow * tileSize + (tileSize - size)/2;
+            double targetX = targetTileCol * tileSize + (tileSize - size) / 2.0;
+            double targetY = targetTileRow * tileSize + (tileSize - size) / 2.0;
 
-            // move axis separately for smoothness
-            if (Math.abs(targetX - x) <= speed) {
-                x = targetX;
-            } else if (x < targetX && !isColliding(x + speed, y)) {
-                x += speed;
-            } else if (x > targetX && !isColliding(x - speed, y)) {
-                x -= speed;
-            }
+            smoothMove(targetX, targetY);
 
-            if (Math.abs(targetY - y) <= speed) {
-                y = targetY;
-            } else if (y < targetY && !isColliding(x, y + speed)) {
-                y += speed;
-            } else if (y > targetY && !isColliding(x, y - speed)) {
-                y -= speed;
-            }
-
-            // if close to tile center, advance to next path node
-            if (Math.abs(targetX - x) <= 1 && Math.abs(targetY - y) <= 1) {
+            if (Math.abs(targetX - x) < 2 && Math.abs(targetY - y) < 2)
                 pathIndex++;
-            }
         } else {
-            // No path found: small random wandering (prevents being stuck)
-            int dir = rnd.nextInt(4);
-            int nx = x, ny = y;
-            if (dir == 0) nx += speed;
-            if (dir == 1) nx -= speed;
-            if (dir == 2) ny += speed;
-            if (dir == 3) ny -= speed;
-            if (!isColliding(nx, ny)) { x = nx; y = ny; }
+            wander();
         }
     }
 
-    // BFS pathfinder using tile coords
+    private void smoothMove(double targetX, double targetY) {
+        double dx = targetX - x;
+        double dy = targetY - y;
+        double dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > 0.1) {
+            double nx = dx / dist;
+            double ny = dy / dist;
+
+            // smooth velocity (lerp)
+            vx = vx * 0.8 + nx * speed * 0.2;
+            vy = vy * 0.8 + ny * speed * 0.2;
+
+            double newX = x + vx;
+            double newY = y + vy;
+
+            if (!isColliding(newX, newY)) {
+                x = newX;
+                y = newY;
+            }
+        }
+    }
+
+    private void wander() {
+        int dir = rnd.nextInt(8);
+        double dx = 0, dy = 0;
+        if (dir == 0) dx = 1;
+        if (dir == 1) dx = -1;
+        if (dir == 2) dy = 1;
+        if (dir == 3) dy = -1;
+        if (dir == 4) { dx = 1; dy = 1; }
+        if (dir == 5) { dx = -1; dy = 1; }
+        if (dir == 6) { dx = 1; dy = -1; }
+        if (dir == 7) { dx = -1; dy = -1; }
+
+        double newX = x + dx * speed;
+        double newY = y + dy * speed;
+        if (!isColliding(newX, newY)) {
+            x = newX;
+            y = newY;
+        }
+    }
+
     private void computePath(int startRow, int startCol, int goalRow, int goalCol) {
         int rows = maze.mazeData.length;
-        int cols = maze.mazeData[0].length;
+        int cols = maze.mazeData[0].length();
 
-        // guard: invalid start/goal
-        if (startRow < 0 || startCol < 0 || startRow >= rows || startCol >= cols) {
-            pathRow = null; pathCol = null; pathIndex = 0; return;
-        }
-        if (goalRow < 0 || goalCol < 0 || goalRow >= rows || goalCol >= cols) {
-            pathRow = null; pathCol = null; pathIndex = 0; return;
-        }
-        if (maze.isWallTile(startRow, startCol) || maze.isWallTile(goalRow, goalCol)) {
-            pathRow = null; pathCol = null; pathIndex = 0; return;
+        if (!isValidTile(startRow, startCol) || !isValidTile(goalRow, goalCol)) {
+            pathRow = null;
+            pathCol = null;
+            pathIndex = 0;
+            return;
         }
 
         boolean[][] visited = new boolean[rows][cols];
@@ -117,24 +134,25 @@ public class Ghost {
         q.add(new int[]{startRow, startCol});
         visited[startRow][startCol] = true;
 
-        int[] dr = {-1, 1, 0, 0};
-        int[] dc = {0, 0, -1, 1};
+        int[] dr = {-1, 1, 0, 0, -1, -1, 1, 1};
+        int[] dc = {0, 0, -1, 1, -1, 1, -1, 1};
+
         boolean found = false;
 
         while (!q.isEmpty()) {
             int[] cur = q.poll();
             int r = cur[0], c = cur[1];
-            if (r == goalRow && c == goalCol) { found = true; break; }
-            // neighbors in random order for variety
-            Integer[] order = {0,1,2,3};
-            Collections.shuffle(Arrays.asList(order), rnd);
-            for (int k = 0; k < 4; k++) {
-                int i = order[k];
+
+            if (r == goalRow && c == goalCol) {
+                found = true;
+                break;
+            }
+
+            for (int i = 0; i < 8; i++) {
                 int nr = r + dr[i];
                 int nc = c + dc[i];
-                if (nr < 0 || nc < 0 || nr >= rows || nc >= cols) continue;
-                if (visited[nr][nc]) continue;
-                if (maze.isWallTile(nr, nc)) continue;
+                if (!isValidTile(nr, nc)) continue;
+                if (visited[nr][nc] || maze.isWallTile(nr, nc)) continue;
                 visited[nr][nc] = true;
                 prevR[nr][nc] = r;
                 prevC[nr][nc] = c;
@@ -143,45 +161,46 @@ public class Ghost {
         }
 
         if (!found) {
-            // no path
-            pathRow = null; pathCol = null; pathIndex = 0;
+            pathRow = null;
+            pathCol = null;
+            pathIndex = 0;
             return;
         }
 
-        // reconstruct
         List<Integer> pr = new ArrayList<>();
         List<Integer> pc = new ArrayList<>();
         int r = goalRow, c = goalCol;
-        while (!(r == startRow && c == startCol)) {
-            pr.add(r); pc.add(c);
+        while (r != -1 && c != -1) {
+            pr.add(r);
+            pc.add(c);
             int tr = prevR[r][c];
             int tc = prevC[r][c];
-            r = tr; c = tc;
-            if (r == -1 || c == -1) break;
+            r = tr;
+            c = tc;
         }
-        // add start tile at the front
-        pr.add(startRow); pc.add(startCol);
 
         Collections.reverse(pr);
         Collections.reverse(pc);
+
         pathRow = pr.stream().mapToInt(i -> i).toArray();
         pathCol = pc.stream().mapToInt(i -> i).toArray();
-
-        // start following from next tile (so ghost doesn't target its own tile)
-        pathIndex = Math.min(1, pathRow.length);
+        pathIndex = 1;
     }
 
-    // 4-corner pixel collision
-    private boolean isColliding(int newX, int newY) {
-        return maze.isWall(newX, newY) ||
-               maze.isWall(newX + size - 1, newY) ||
-               maze.isWall(newX, newY + size - 1) ||
-               maze.isWall(newX + size - 1, newY + size - 1);
+    private boolean isValidTile(int r, int c) {
+        return r >= 0 && c >= 0 && r < maze.mazeData.length && c < maze.mazeData[0].length();
+    }
+
+    private boolean isColliding(double newX, double newY) {
+        return maze.isWall((int)newX, (int)newY)
+                || maze.isWall((int)(newX + size - 1), (int)newY)
+                || maze.isWall((int)newX, (int)(newY + size - 1))
+                || maze.isWall((int)(newX + size - 1), (int)(newY + size - 1));
     }
 
     public void draw(Graphics g) {
         g.setColor(color);
-        g.fillOval(x, y, size, size);
+        g.fillOval((int)x, (int)y, size, size);
     }
 
     public boolean collidesWith(Player p) {
