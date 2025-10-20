@@ -29,13 +29,13 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
     private boolean gameOverShown = false;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(1200, 800));
+        setPreferredSize(new Dimension(1200, 780));
         setBackground(Color.black);
         setFocusable(true);
         addKeyListener(this);
         maze = new Maze();
-        player = new Player(640, 420, maze);
-        ghost = new Ghost(40, 150, maze);
+        player = new Player(640, 400, maze);
+        ghost = new Ghost(10, 10, maze);
 
         initCheckpoints();
 

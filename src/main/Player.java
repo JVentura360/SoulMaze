@@ -5,7 +5,7 @@ import java.awt.event.KeyEvent;
 public class Player {
     public int x, y;
     public int speed = 4;
-    public int size = 25;
+    public int size = 60;
     Maze maze;
 
     boolean up, down, left, right;

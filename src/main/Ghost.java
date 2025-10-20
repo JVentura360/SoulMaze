@@ -7,7 +7,7 @@ import java.util.*;
 public class Ghost {
 	public double x, y; // use double for smooth motion
     public double speed = 2.0;
-    public int size = 25;
+    public int size = 60;
     private Color color = Color.RED;
     private Maze maze;
 
