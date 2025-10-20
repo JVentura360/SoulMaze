@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.ByteArrayInputStream;
 import javax.sound.sampled.*;
 
 public class MainMenu extends JPanel implements MouseListener, MouseMotionListener {
@@ -64,24 +65,58 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
     
     private void loadBackgroundMusic() {
         try {
-            // Try MP3 first, then fallback to WAV
             File musicFile = new File("src/assets/Music/MainMenuBackgroundSong.wav");
             if (!musicFile.exists()) {
-                musicFile = new File("src/assets/Music/MainMenuBackgroundSong.wav");
+                musicFile = new File("src/assets/Music/MainMenuBackgroundSong.mp3");
             }
             
             if (musicFile.exists()) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
-                backgroundMusic = AudioSystem.getClip();
-                backgroundMusic.open(audioStream);
-                backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
-                System.out.println("Background music loaded successfully");
+                AudioInputStream fullStream = AudioSystem.getAudioInputStream(musicFile);
+                AudioFormat format = fullStream.getFormat();
+                
+                // Calculate bytes for 0:15 to 0:38 (23 seconds)
+                int frameSize = format.getFrameSize();
+                long startFrame = (long) (15.0 * format.getFrameRate());
+                long endFrame = (long) (38.0 * format.getFrameRate());
+                long frameLength = endFrame - startFrame;
+                long byteLength = frameLength * frameSize;
+                
+                System.out.println("Audio format: " + format);
+                System.out.println("Frame rate: " + format.getFrameRate());
+                System.out.println("Start frame: " + startFrame + ", End frame: " + endFrame);
+                System.out.println("Frame length: " + frameLength);
+                
+                // Read the specific segment into a byte array
+                byte[] audioData = new byte[(int) byteLength];
+                long bytesSkipped = fullStream.skip(startFrame * frameSize);
+                System.out.println("Bytes skipped: " + bytesSkipped);
+                
+                int bytesRead = fullStream.read(audioData, 0, (int) byteLength);
+                System.out.println("Bytes read: " + bytesRead);
+                
+                if (bytesRead > 0) {
+                    // Create new stream from the extracted data
+                    ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+                    AudioInputStream segmentStream = new AudioInputStream(bais, format, frameLength);
+                    
+                    backgroundMusic = AudioSystem.getClip();
+                    backgroundMusic.open(segmentStream);
+                    backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
+                    System.out.println("Background music loaded successfully (0:15-0:38 loop)");
+                } else {
+                    System.out.println("Failed to read audio segment, playing full track");
+                    // Fallback to full track
+                    AudioInputStream fallbackStream = AudioSystem.getAudioInputStream(musicFile);
+                    backgroundMusic = AudioSystem.getClip();
+                    backgroundMusic.open(fallbackStream);
+                    backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
+                }
             } else {
                 System.out.println("No music file found at src/assets/Music/");
             }
         } catch (Exception e) {
             System.err.println("Error loading background music: " + e.getMessage());
-            System.out.println("MP3 format not supported. Please convert to WAV format or install MP3 support library.");
+            e.printStackTrace();
         }
     }
     
@@ -108,9 +143,13 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         int titleY = 150;
         g2d.drawString(title, titleX, titleY);
         
-        // Draw buttons
-        drawButton(g2d, startButtonImage, startButtonHoverImage, startHovered, 400, 300, "");
-        drawButton(g2d, exitButtonImage, exitButtonHoverImage, exitHovered, 400, 450, "");
+        // Draw buttons horizontally aligned below title
+        int buttonY = 650; // Position below title
+        int startButtonX = (getWidth() - 200) / 2 - 120; // Left of center
+        int exitButtonX = (getWidth() - 200) / 2 + 120;  // Right of center
+        
+        drawButton(g2d, startButtonImage, startButtonHoverImage, startHovered, startButtonX, buttonY, "");
+        drawButton(g2d, exitButtonImage, exitButtonHoverImage, exitHovered, exitButtonX, buttonY, "");
     }
     
     private void drawButton(Graphics2D g2d, Image normalImage, Image hoverImage, boolean hovered, int x, int y, String text) {
@@ -141,12 +180,17 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         int x = e.getX();
         int y = e.getY();
         
+        // Calculate button positions dynamically
+        int buttonY = 650;
+        int startButtonX = (getWidth() - 200) / 2 - 120;
+        int exitButtonX = (getWidth() - 200) / 2 + 120;
+        
         // Check if click is on Start Game button
-        if (x >= 400 && x <= 600 && y >= 300 && y <= 380) {
+        if (x >= startButtonX && x <= startButtonX + 200 && y >= buttonY && y <= buttonY + 80) {
             startGame();
         }
         // Check if click is on Exit button
-        else if (x >= 400 && x <= 600 && y >= 450 && y <= 530) {
+        else if (x >= exitButtonX && x <= exitButtonX + 200 && y >= buttonY && y <= buttonY + 80) {
             exitGame();
         }
     }
@@ -159,8 +203,13 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         boolean wasStartHovered = startHovered;
         boolean wasExitHovered = exitHovered;
         
-        startHovered = (x >= 400 && x <= 600 && y >= 300 && y <= 380);
-        exitHovered = (x >= 400 && x <= 600 && y >= 450 && y <= 530);
+        // Calculate button positions dynamically
+        int buttonY = 650;
+        int startButtonX = (getWidth() - 200) / 2 - 120;
+        int exitButtonX = (getWidth() - 200) / 2 + 120;
+        
+        startHovered = (x >= startButtonX && x <= startButtonX + 200 && y >= buttonY && y <= buttonY + 80);
+        exitHovered = (x >= exitButtonX && x <= exitButtonX + 200 && y >= buttonY && y <= buttonY + 80);
         
         if (startHovered != wasStartHovered || exitHovered != wasExitHovered) {
             repaint();
