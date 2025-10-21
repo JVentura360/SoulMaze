@@ -103,7 +103,7 @@
 103) Shape with eight sides? - Octagon
 104) Shape with four equal sides? - Square
 105) Number of continents? - Seven or 7
-106) Days in a leap year? - 366 Days or 336
+106) Days in a leap year? - 366 Days or 366
 107) Months in a year? - Twelve or 12
 108) Hours in a day? - Twenty Four or 24
 109) Minutes in an hour? - Sixty or 60

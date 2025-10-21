@@ -5,8 +5,8 @@ import java.awt.event.KeyEvent;
 public class Player {
     public int x, y;
     public int speed = 4;
-    public int size = 60;
-    Maze maze;
+    public int size = 20;
+    private Maze maze;
 
     boolean up, down, left, right;
 
@@ -25,26 +25,39 @@ public class Player {
         if (left) nextX -= speed;
         if (right) nextX += speed;
 
-        if (!isColliding(nextX, nextY)) {
-            x = nextX;
-            y = nextY;
-        } else {
-            // Try move axis-separately for smoother sliding
-            if (!isColliding(nextX, y)) x = nextX;
-            else if (!isColliding(x, nextY)) y = nextY;
-        }
+        // Check horizontal move first
+        if (canMove(nextX, y)) x = nextX;
+
+        // Then vertical move separately
+        if (canMove(x, nextY)) y = nextY;
     }
 
-    private boolean isColliding(int newX, int newY) {
-        return maze.isWall(newX, newY) ||
-               maze.isWall(newX + size - 1, newY) ||
-               maze.isWall(newX, newY + size - 1) ||
-               maze.isWall(newX + size - 1, newY + size - 1);
+    /** 
+     * Checks if the player can move to (newX, newY) 
+     * using strict 4-corner collision detection.
+     */
+    private boolean canMove(int newX, int newY) {
+        int s = size;
+        int left = newX;
+        int right = newX + s - 1;
+        int top = newY;
+        int bottom = newY + s - 1;
+
+        // Check all tiles the player overlaps
+        for (int row = top / maze.tileSize; row <= bottom / maze.tileSize; row++) {
+            for (int col = left / maze.tileSize; col <= right / maze.tileSize; col++) {
+                if (maze.isWallTile(row, col)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public void draw(Graphics g) {
         g.setColor(Color.GREEN);
-        g.fillOval(x, y, size, size);
+        // Slightly smaller so it doesn’t appear inside wall edges visually
+        g.fillOval(x + 1, y + 1, size - 2, size - 2);
     }
 
     public void keyPressed(KeyEvent e) {

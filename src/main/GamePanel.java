@@ -3,88 +3,104 @@ package main;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.io.*;
+import java.util.*;
 
-public class GamePanel extends JPanel implements KeyListener, Runnable{
+/**
+ * GamePanel handles the main gameplay loop, drawing, and logic.
+ * It manages the maze, player, ghost, and checkpoint/question system.
+ */
+public class GamePanel extends JPanel implements KeyListener, Runnable {
     private Thread gameThread;
     private boolean running = true;
+
     private Player player;
     private Ghost ghost;
     private Maze maze;
     private boolean gameOver = false;
+    private boolean gameOverShown = false;
 
-    // Checkpoint/Question system
-    private final List<Checkpoint> checkpoints = new ArrayList<>();
+    // Checkpoint / Question system
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
     private final Random rnd = new Random();
     private boolean awaitingAnswer = false;
     private Checkpoint activeCheckpoint = null;
     private JDialog activeDialog = null;
-    private boolean gameOverShown = false;
 
+    // === Constructor ===
     public GamePanel() {
         setPreferredSize(new Dimension(1200, 780));
         setBackground(Color.black);
         setFocusable(true);
         addKeyListener(this);
+
+        // Initialize core game objects
         maze = new Maze();
         player = new Player(640, 400, maze);
-        ghost = new Ghost(10, 10, maze);
+        ghost = new Ghost(40, 150, maze);
 
         initCheckpoints();
 
+        // Start main game loop
         gameThread = new Thread(this);
         gameThread.start();
     }
 
+    // === Game Loop ===
     @Override
     public void run() {
         while (running) {
             update();
             repaint();
-
             try {
-                Thread.sleep(16);
-            } catch (InterruptedException e) {}
+                Thread.sleep(16); // ~60 FPS
+            } catch (InterruptedException ignored) {}
         }
     }
 
+    // === Game Logic ===
     private void update() {
-        if (!gameOver) {
-            if (!awaitingAnswer) {
-                player.update();
-                checkCheckpointTrigger();
-            }
-            ghost.update(player);
+        if (gameOver) return;
 
-            if (ghost.collidesWith(player)) {
-                gameOver = true;
-                // Close any open dialog on game over (on EDT)
-                if (activeDialog != null) {
-                    SwingUtilities.invokeLater(() -> {
-                        try { activeDialog.dispose(); } catch (Exception ignore) {}
-                        activeDialog = null;
-                    });
-                }
-                awaitingAnswer = false;
-                activeCheckpoint = null;
-                if (!gameOverShown) {
-                    gameOverShown = true;
-                    SwingUtilities.invokeLater(this::showGameOverDialog);
-                }
-            }
+        if (!awaitingAnswer) {
+            player.update();
+            checkCheckpointTrigger();
+        }
+
+        ghost.update(player);
+
+        if (ghost.collidesWith(player)) {
+            handleGameOver();
         }
     }
 
+    private void handleGameOver() {
+        gameOver = true;
+
+        // Close question dialog if open
+        if (activeDialog != null) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    activeDialog.dispose();
+                } catch (Exception ignore) {}
+                activeDialog = null;
+            });
+        }
+
+        awaitingAnswer = false;
+        activeCheckpoint = null;
+
+        if (!gameOverShown) {
+            gameOverShown = true;
+            SwingUtilities.invokeLater(this::showGameOverDialog);
+        }
+    }
+
+    // === Drawing ===
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
         maze.draw(g);
         for (Checkpoint cp : checkpoints) cp.draw(g);
         player.draw(g);
@@ -93,26 +109,38 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
         if (gameOver) {
             g.setColor(Color.RED);
             g.setFont(new Font("Arial", Font.BOLD, 40));
-            g.drawString("GAME OVER", 220, 240);
+            g.drawString("GAME OVER", 480, 380);
         }
     }
 
-    public void keyPressed(KeyEvent e) { if (!awaitingAnswer) player.keyPressed(e); }
-    public void keyReleased(KeyEvent e) { if (!awaitingAnswer) player.keyReleased(e); }
+    // === Input Handling ===
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (!awaitingAnswer) player.keyPressed(e);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if (!awaitingAnswer) player.keyReleased(e);
+    }
+
+    @Override
     public void keyTyped(KeyEvent e) {}
 
-    // ---------- Checkpoint & Question Logic ----------
+    // === Checkpoint / Question System ===
     private void initCheckpoints() {
-        List<Question> all = readQuestions();
+        ArrayList<Question> all = readQuestions();
         if (all.isEmpty()) return;
+
         Collections.shuffle(all, rnd);
         int needed = Math.min(20, all.size());
 
-        // collect open tiles
-        List<int[]> openTiles = new ArrayList<>();
+        // Collect open tiles from the maze
+        ArrayList<int[]> openTiles = new ArrayList<>();
         for (int r = 0; r < maze.mazeData.length; r++) {
             for (int c = 0; c < maze.mazeData[0].length(); c++) {
-                if (maze.mazeData[r].charAt(c) == ' ') openTiles.add(new int[]{r, c});
+                if (maze.mazeData[r].charAt(c) == ' ')
+                    openTiles.add(new int[]{r, c});
             }
         }
         Collections.shuffle(openTiles, rnd);
@@ -123,24 +151,28 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
             int[] rc = openTiles.get(i++);
             int tileX = rc[1] * maze.tileSize;
             int tileY = rc[0] * maze.tileSize;
-            if (overlaps(tileX, tileY, maze.tileSize, maze.tileSize, player.x, player.y, player.size, player.size)) continue;
+
+            // Avoid placing checkpoints near the player’s start position
+            if (overlaps(tileX, tileY, maze.tileSize, maze.tileSize,
+                         player.x, player.y, player.size, player.size))
+                continue;
+
             Question q = all.get(placed);
             checkpoints.add(new Checkpoint(tileX, tileY, maze.tileSize, q));
             placed++;
         }
     }
 
-    private List<Question> readQuestions() {
-        // Try file in working dir
-        List<Question> list = readQuestionsFromFile(new File("CheckpointQuestions.txt"));
+    private ArrayList<Question> readQuestions() {
+        ArrayList<Question> list = readQuestionsFromFile(new File("CheckpointQuestions.txt"));
         if (list.isEmpty()) list = readQuestionsFromFile(new File("src/main/CheckpointQuestions.txt"));
         if (list.isEmpty()) list = readQuestionsFromFile(new File("../CheckpointQuestions.txt"));
         if (list.isEmpty()) list = defaultQuestions();
         return list;
     }
 
-    private List<Question> readQuestionsFromFile(File file) {
-        List<Question> list = new ArrayList<>();
+    private ArrayList<Question> readQuestionsFromFile(File file) {
+        ArrayList<Question> list = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -148,13 +180,11 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
                 if (line.isEmpty()) continue;
                 list.add(Question.fromLine(line));
             }
-        } catch (IOException e) {
-            // ignore
-        }
+        } catch (IOException ignored) {}
         return list;
     }
 
-    private List<Question> defaultQuestions() {
+    private ArrayList<Question> defaultQuestions() {
         String[] raw = new String[]{
             "1) Capital of France? - Paris",
             "2) Largest planet? - Jupiter",
@@ -187,7 +217,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
             "29) Chocolate Hills island? - Bohol",
             "30) Taal is a? - Volcano"
         };
-        List<Question> list = new ArrayList<>();
+        ArrayList<Question> list = new ArrayList<>();
         for (String s : raw) list.add(Question.fromLine(s));
         return list;
     }
@@ -195,7 +225,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
     private void checkCheckpointTrigger() {
         for (Checkpoint cp : checkpoints) {
             if (cp.solved) continue;
-            if (overlaps(player.x, player.y, player.size, player.size, cp.x, cp.y, cp.size, cp.size)) {
+            if (overlaps(player.x, player.y, player.size, player.size,
+                         cp.x, cp.y, cp.size, cp.size)) {
                 activeCheckpoint = cp;
                 awaitingAnswer = true;
                 showQuestionDialog(cp);
@@ -204,7 +235,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
         }
     }
 
-    private boolean overlaps(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh) {
+    private boolean overlaps(int ax, int ay, int aw, int ah,
+                             int bx, int by, int bw, int bh) {
         return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
     }
 
@@ -215,7 +247,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
                 try { activeDialog.dispose(); } catch (Exception ignore) {}
                 activeDialog = null;
             }
-            java.awt.Window parent = SwingUtilities.getWindowAncestor(this);
+
+            Window parent = SwingUtilities.getWindowAncestor(this);
             JDialog dialog = new JDialog(parent, "Checkpoint", Dialog.ModalityType.APPLICATION_MODAL);
             dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
@@ -229,12 +262,13 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
             JPanel bottom = new JPanel(new BorderLayout(6, 6));
             bottom.add(field, BorderLayout.CENTER);
             bottom.add(submit, BorderLayout.EAST);
+
             panel.add(label, BorderLayout.NORTH);
             panel.add(bottom, BorderLayout.CENTER);
             panel.add(feedback, BorderLayout.SOUTH);
 
             submit.addActionListener(ev -> {
-                String input = field.getText();
+                String input = field.getText().trim();
                 if (cp.question.matches(input)) {
                     cp.solved = true;
                     awaitingAnswer = false;
@@ -249,32 +283,34 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
             dialog.setContentPane(panel);
             dialog.pack();
             dialog.setLocationRelativeTo(parent);
-            // Disable ESC to close
+
+            // Disable ESC
             JRootPane root = dialog.getRootPane();
             InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
             ActionMap am = root.getActionMap();
             im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "noop");
-            am.put("noop", new AbstractAction() { public void actionPerformed(java.awt.event.ActionEvent e) {} });
-            // Enter submits
+            am.put("noop", new AbstractAction() {
+                @Override public void actionPerformed(ActionEvent e) {}
+            });
             root.setDefaultButton(submit);
-            // Clear any stuck movement and open dialog
+
             player.stop();
             activeDialog = dialog;
             dialog.setVisible(true);
-            });
+        });
     }
 
     private void showGameOverDialog() {
-        java.awt.Window parent = SwingUtilities.getWindowAncestor(this);
+        Window parent = SwingUtilities.getWindowAncestor(this);
         JDialog dialog = new JDialog(parent, "Game Over", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-        JPanel panel = new JPanel(new BorderLayout(10,10));
-        JLabel msg = new JLabel("GAME OVER");
-        msg.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JLabel msg = new JLabel("GAME OVER", SwingConstants.CENTER);
         JPanel buttons = new JPanel();
         JButton retry = new JButton("Play Again");
         JButton close = new JButton("Close");
+
         buttons.add(retry);
         buttons.add(close);
         panel.add(msg, BorderLayout.CENTER);
@@ -284,9 +320,10 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
             dialog.dispose();
             resetGame();
         });
+
         close.addActionListener(e -> {
             try {
-                if (parent instanceof java.awt.Window) ((java.awt.Window) parent).dispose();
+                if (parent instanceof Window w) w.dispose();
             } catch (Exception ignore) {}
             System.exit(0);
         });
@@ -304,14 +341,18 @@ public class GamePanel extends JPanel implements KeyListener, Runnable{
         gameOverShown = false;
         awaitingAnswer = false;
         activeCheckpoint = null;
+
         // reset entities
-        player.x = 640; player.y = 420;
-        ghost.x = 40; ghost.y = 150;
+        player.x = 640;
+        player.y = 420;
         player.stop();
+
+        // safely reset ghost if method exists
+
         // regenerate checkpoints
         checkpoints.clear();
         initCheckpoints();
-        // return keyboard focus to game panel
+
         requestFocusInWindow();
     }
 }

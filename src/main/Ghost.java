@@ -1,23 +1,23 @@
 package main;
-import java.awt.Color;
-import java.awt.Graphics;
+
+import java.awt.*;
 import java.util.*;
 
-
 public class Ghost {
-	public double x, y; // use double for smooth motion
-    public double speed = 2.0;
-    public int size = 60;
+    public double x, y;
+    private double speed = 1.8; // smooth following speed
+    private int size = 20;
     private Color color = Color.RED;
     private Maze maze;
 
-    private int[] pathRow, pathCol;
-    private int pathIndex = 0;
-    private long lastPathUpdate = 0;
-    private Random rnd = new Random();
-
-    // smoothing memory
     private double vx = 0, vy = 0;
+    private double steerStrength = 0.1;
+    private int safeDistance = 1;
+
+    private ArrayList<Point> path = new ArrayList<>();
+    private int pathIndex = 0;
+    private long lastPathTime = 0;
+    private static final int PATH_UPDATE_INTERVAL = 400; // ms
 
     public Ghost(int x, int y, Maze maze) {
         this.x = x;
@@ -26,184 +26,121 @@ public class Ghost {
     }
 
     public void update(Player player) {
-        int tileSize = maze.tileSize;
+        long now = System.currentTimeMillis();
 
+        int tileSize = maze.tileSize;
         int ghostRow = (int) ((y + size / 2) / tileSize);
         int ghostCol = (int) ((x + size / 2) / tileSize);
         int playerRow = (player.y + player.size / 2) / tileSize;
         int playerCol = (player.x + player.size / 2) / tileSize;
 
-        boolean needRecalc = false;
-
-        if (pathRow == null || pathIndex >= pathRow.length)
-            needRecalc = true;
-        else {
-            int goalR = pathRow[pathRow.length - 1];
-            int goalC = pathCol[pathCol.length - 1];
-            if (goalR != playerRow || goalC != playerCol)
-                needRecalc = true;
-        }
-
-        if (System.currentTimeMillis() - lastPathUpdate > 400)
-            needRecalc = true;
-
-        if (needRecalc) {
+        // Recalculate path occasionally or if lost
+        if (path.isEmpty() || pathIndex >= path.size() || now - lastPathTime > PATH_UPDATE_INTERVAL) {
             computePath(ghostRow, ghostCol, playerRow, playerCol);
-            lastPathUpdate = System.currentTimeMillis();
+            pathIndex = 0;
+            lastPathTime = now;
         }
 
-        // smooth following
-        if (pathRow != null && pathIndex < pathRow.length) {
-            int targetTileRow = pathRow[pathIndex];
-            int targetTileCol = pathCol[pathIndex];
-            double targetX = targetTileCol * tileSize + (tileSize - size) / 2.0;
-            double targetY = targetTileRow * tileSize + (tileSize - size) / 2.0;
+        // Follow the path smoothly
+        if (!path.isEmpty() && pathIndex < path.size()) {
+            Point next = path.get(pathIndex);
+            double targetX = next.x * tileSize + (tileSize - size) / 2.0;
+            double targetY = next.y * tileSize + (tileSize - size) / 2.0;
 
-            smoothMove(targetX, targetY);
+            double dx = targetX - x;
+            double dy = targetY - y;
+            double dist = Math.sqrt(dx * dx + dy * dy);
 
-            if (Math.abs(targetX - x) < 2 && Math.abs(targetY - y) < 2)
+            if (dist < 2) {
                 pathIndex++;
-        } else {
-            wander();
-        }
-    }
+            } else {
+                // Smooth steering toward next path node
+                dx /= dist;
+                dy /= dist;
+                vx += (dx * speed - vx) * steerStrength;
+                vy += (dy * speed - vy) * steerStrength;
 
-    private void smoothMove(double targetX, double targetY) {
-        double dx = targetX - x;
-        double dy = targetY - y;
-        double dist = Math.sqrt(dx * dx + dy * dy);
+                double newX = x + vx;
+                double newY = y + vy;
 
-        if (dist > 0.1) {
-            double nx = dx / dist;
-            double ny = dy / dist;
-
-            // smooth velocity (lerp)
-            vx = vx * 0.8 + nx * speed * 0.2;
-            vy = vy * 0.8 + ny * speed * 0.2;
-
-            double newX = x + vx;
-            double newY = y + vy;
-
-            if (!isColliding(newX, newY)) {
-                x = newX;
-                y = newY;
+                // Move with collision checking
+                if (!isColliding(newX, y)) x = newX;
+                else vx = 0;
+                if (!isColliding(x, newY)) y = newY;
+                else vy = 0;
             }
-        }
-    }
-
-    private void wander() {
-        int dir = rnd.nextInt(8);
-        double dx = 0, dy = 0;
-        if (dir == 0) dx = 1;
-        if (dir == 1) dx = -1;
-        if (dir == 2) dy = 1;
-        if (dir == 3) dy = -1;
-        if (dir == 4) { dx = 1; dy = 1; }
-        if (dir == 5) { dx = -1; dy = 1; }
-        if (dir == 6) { dx = 1; dy = -1; }
-        if (dir == 7) { dx = -1; dy = -1; }
-
-        double newX = x + dx * speed;
-        double newY = y + dy * speed;
-        if (!isColliding(newX, newY)) {
-            x = newX;
-            y = newY;
         }
     }
 
     private void computePath(int startRow, int startCol, int goalRow, int goalCol) {
-        int rows = maze.mazeData.length;
-        int cols = maze.mazeData[0].length();
-
-        if (!isValidTile(startRow, startCol) || !isValidTile(goalRow, goalCol)) {
-            pathRow = null;
-            pathCol = null;
-            pathIndex = 0;
-            return;
-        }
+        int rows = maze.getRows();
+        int cols = maze.getCols();
 
         boolean[][] visited = new boolean[rows][cols];
-        int[][] prevR = new int[rows][cols];
-        int[][] prevC = new int[rows][cols];
-        for (int r = 0; r < rows; r++) {
-            Arrays.fill(prevR[r], -1);
-            Arrays.fill(prevC[r], -1);
-        }
+        Map<Point, Point> parent = new HashMap<>();
+        Queue<Point> queue = new LinkedList<>();
 
-        Queue<int[]> q = new ArrayDeque<>();
-        q.add(new int[]{startRow, startCol});
+        Point start = new Point(startCol, startRow);
+        Point goal = new Point(goalCol, goalRow);
+
+        queue.add(start);
         visited[startRow][startCol] = true;
 
-        int[] dr = {-1, 1, 0, 0, -1, -1, 1, 1};
-        int[] dc = {0, 0, -1, 1, -1, 1, -1, 1};
+        int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-        boolean found = false;
+        while (!queue.isEmpty()) {
+            Point current = queue.poll();
+            if (current.equals(goal)) break;
 
-        while (!q.isEmpty()) {
-            int[] cur = q.poll();
-            int r = cur[0], c = cur[1];
+            for (int[] d : dirs) {
+                int nr = current.y + d[1];
+                int nc = current.x + d[0];
 
-            if (r == goalRow && c == goalCol) {
-                found = true;
-                break;
-            }
-
-            for (int i = 0; i < 8; i++) {
-                int nr = r + dr[i];
-                int nc = c + dc[i];
-                if (!isValidTile(nr, nc)) continue;
+                if (nr < 0 || nc < 0 || nr >= rows || nc >= cols) continue;
                 if (visited[nr][nc] || maze.isWallTile(nr, nc)) continue;
+
                 visited[nr][nc] = true;
-                prevR[nr][nc] = r;
-                prevC[nr][nc] = c;
-                q.add(new int[]{nr, nc});
+                Point next = new Point(nc, nr);
+                parent.put(next, current);
+                queue.add(next);
             }
         }
 
-        if (!found) {
-            pathRow = null;
-            pathCol = null;
-            pathIndex = 0;
-            return;
+        // Reconstruct path
+        path.clear();
+        Point cur = goal;
+        while (parent.containsKey(cur)) {
+            path.add(0, cur);
+            cur = parent.get(cur);
         }
-
-        List<Integer> pr = new ArrayList<>();
-        List<Integer> pc = new ArrayList<>();
-        int r = goalRow, c = goalCol;
-        while (r != -1 && c != -1) {
-            pr.add(r);
-            pc.add(c);
-            int tr = prevR[r][c];
-            int tc = prevC[r][c];
-            r = tr;
-            c = tc;
-        }
-
-        Collections.reverse(pr);
-        Collections.reverse(pc);
-
-        pathRow = pr.stream().mapToInt(i -> i).toArray();
-        pathCol = pc.stream().mapToInt(i -> i).toArray();
-        pathIndex = 1;
-    }
-
-    private boolean isValidTile(int r, int c) {
-        return r >= 0 && c >= 0 && r < maze.mazeData.length && c < maze.mazeData[0].length();
     }
 
     private boolean isColliding(double newX, double newY) {
-        return maze.isWall((int)newX, (int)newY)
-                || maze.isWall((int)(newX + size - 1), (int)newY)
-                || maze.isWall((int)newX, (int)(newY + size - 1))
-                || maze.isWall((int)(newX + size - 1), (int)(newY + size - 1));
+        int s = size;
+        int margin = safeDistance;
+        int left = (int) (newX + margin);
+        int right = (int) (newX + s - 1 - margin);
+        int top = (int) (newY + margin);
+        int bottom = (int) (newY + s - 1 - margin);
+
+        for (int row = top / maze.tileSize; row <= bottom / maze.tileSize; row++) {
+            for (int col = left / maze.tileSize; col <= right / maze.tileSize; col++) {
+                if (maze.isWallTile(row, col)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void draw(Graphics g) {
         g.setColor(color);
-        g.fillOval((int)x, (int)y, size, size);
+        g.fillOval((int) x, (int) y, size, size);
     }
 
     public boolean collidesWith(Player p) {
-        return Math.abs(p.x - x) < size && Math.abs(p.y - y) < size;
+        Rectangle ghostRect = new Rectangle((int) x, (int) y, size, size);
+        Rectangle playerRect = new Rectangle(p.x, p.y, p.size, p.size);
+        return ghostRect.intersects(playerRect);
     }
 }
