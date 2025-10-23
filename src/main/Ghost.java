@@ -1,23 +1,23 @@
 package main;
 
 import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 public class Ghost {
-    public double x, y;
-    private double speed = 1.8; // smooth following speed
-    private int size = 20;
-    private Color color = Color.RED;
+	public int x, y;
+    public int speed = 2;
+    public int size = 50;
     private Maze maze;
 
-    private double vx = 0, vy = 0;
-    private double steerStrength = 0.1;
-    private int safeDistance = 1;
-
-    private ArrayList<Point> path = new ArrayList<>();
+    // Pathfinding
+    private int[] pathRow, pathCol;
     private int pathIndex = 0;
-    private long lastPathTime = 0;
-    private static final int PATH_UPDATE_INTERVAL = 400; // ms
+    private long lastPathUpdate = 0;
+    private Random rnd = new Random();
+
+    // track player's last tile to avoid re-pathing on micro-movements
+    private int lastPlayerRow = -1, lastPlayerCol = -1;
 
     public Ghost(int x, int y, Maze maze) {
         this.x = x;
@@ -26,121 +26,250 @@ public class Ghost {
     }
 
     public void update(Player player) {
-        long now = System.currentTimeMillis();
-
         int tileSize = maze.tileSize;
-        int ghostRow = (int) ((y + size / 2) / tileSize);
-        int ghostCol = (int) ((x + size / 2) / tileSize);
-        int playerRow = (player.y + player.size / 2) / tileSize;
-        int playerCol = (player.x + player.size / 2) / tileSize;
 
-        // Recalculate path occasionally or if lost
-        if (path.isEmpty() || pathIndex >= path.size() || now - lastPathTime > PATH_UPDATE_INTERVAL) {
-            computePath(ghostRow, ghostCol, playerRow, playerCol);
-            pathIndex = 0;
-            lastPathTime = now;
+        // Tile coordinates (center-based) using Math.floor
+        int ghostRow = getTileRow(y, size, tileSize);
+        int ghostCol = getTileCol(x, size, tileSize);
+        int playerRow = getTileCol(player.y, player.size, tileSize);
+        int playerCol = getTileCol(player.x, player.size, tileSize);
+
+        boolean needRecalc = false;
+
+        // Recalculate if path is empty or player moved to a different tile
+        if (pathRow == null || pathIndex >= pathRow.length) {
+            needRecalc = true;
+        } else {
+            int goalR = pathRow[pathRow.length - 1];
+            int goalC = pathCol[pathCol.length - 1];
+            if (goalR != playerRow || goalC != playerCol)
+                needRecalc = true;
         }
 
-        // Follow the path smoothly
-        if (!path.isEmpty() && pathIndex < path.size()) {
-            Point next = path.get(pathIndex);
-            double targetX = next.x * tileSize + (tileSize - size) / 2.0;
-            double targetY = next.y * tileSize + (tileSize - size) / 2.0;
+        // Only recompute when player tile changed (stops jitter when player touches walls)
+        if (!needRecalc && (playerRow != lastPlayerRow || playerCol != lastPlayerCol)) {
+            needRecalc = true;
+        }
 
-            double dx = targetX - x;
-            double dy = targetY - y;
-            double dist = Math.sqrt(dx * dx + dy * dy);
+        if (needRecalc) {
+            computePath(ghostRow, ghostCol, playerRow, playerCol);
+            lastPathUpdate = System.currentTimeMillis();
+            lastPlayerRow = playerRow;
+            lastPlayerCol = playerCol;
+        }
 
-            if (dist < 2) {
+        // Follow path if valid
+        if (pathRow != null && pathIndex < pathRow.length) {
+            int targetRow = pathRow[pathIndex];
+            int targetCol = pathCol[pathIndex];
+
+            // Center target in tile (tile center minus half body so ghost centers)
+            int targetX = targetCol * tileSize + tileSize / 2 - size / 2;
+            int targetY = targetRow * tileSize + tileSize / 2 - size / 2;
+
+            moveTowards(targetX, targetY);
+
+            // Advance to next node if close enough (don't snap to avoid jitter)
+            double dist = Math.hypot(targetX - x, targetY - y);
+            if (dist < speed * 1.5) {
                 pathIndex++;
-            } else {
-                // Smooth steering toward next path node
-                dx /= dist;
-                dy /= dist;
-                vx += (dx * speed - vx) * steerStrength;
-                vy += (dy * speed - vy) * steerStrength;
-
-                double newX = x + vx;
-                double newY = y + vy;
-
-                // Move with collision checking
-                if (!isColliding(newX, y)) x = newX;
-                else vx = 0;
-                if (!isColliding(x, newY)) y = newY;
-                else vy = 0;
+            }
+        } else {
+            // Wander slightly if no path
+            int dir = rnd.nextInt(4);
+            int nx = x, ny = y;
+            if (dir == 0) nx += speed;
+            if (dir == 1) nx -= speed;
+            if (dir == 2) ny += speed;
+            if (dir == 3) ny -= speed;
+            if (!isColliding(nx, ny)) {
+                x = nx;
+                y = ny;
             }
         }
     }
 
+    // Diagonal/vector movement — moves toward target in straight line, collision-checked
+    private void moveTowards(int targetX, int targetY) {
+        double dx = targetX - x;
+        double dy = targetY - y;
+        double dist = Math.hypot(dx, dy);
+        if (dist == 0) return;
+
+        double nx = (dx / dist) * speed;
+        double ny = (dy / dist) * speed;
+
+        int newX = (int) Math.round(x + nx);
+        int newY = (int) Math.round(y + ny);
+
+        // If the direct diagonal step collides, try axis-aligned fallback to slide along wall
+        if (!isColliding(newX, newY)) {
+            x = newX;
+            y = newY;
+            return;
+        }
+
+        // try x only
+        if (!isColliding(newX, y)) {
+            x = newX;
+        }
+        // try y only
+        if (!isColliding(x, newY)) {
+            y = newY;
+        }
+        // otherwise remain in place (prevents clipping)
+    }
+
+    // BFS pathfinding
     private void computePath(int startRow, int startCol, int goalRow, int goalCol) {
         int rows = maze.getRows();
         int cols = maze.getCols();
 
+        if (!isValidTile(startRow, startCol) || !isValidTile(goalRow, goalCol)) {
+            pathRow = pathCol = null;
+            pathIndex = 0;
+            return;
+        }
+
         boolean[][] visited = new boolean[rows][cols];
-        Map<Point, Point> parent = new HashMap<>();
-        Queue<Point> queue = new LinkedList<>();
+        int[][] prevR = new int[rows][cols];
+        int[][] prevC = new int[rows][cols];
+        for (int r = 0; r < rows; r++) {
+            Arrays.fill(prevR[r], -1);
+            Arrays.fill(prevC[r], -1);
+        }
 
-        Point start = new Point(startCol, startRow);
-        Point goal = new Point(goalCol, goalRow);
-
-        queue.add(start);
+        Queue<int[]> q = new ArrayDeque<>();
+        q.add(new int[]{startRow, startCol});
         visited[startRow][startCol] = true;
 
-        int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        int[] dr = {-1, 1, 0, 0};
+        int[] dc = {0, 0, -1, 1};
+        boolean found = false;
 
-        while (!queue.isEmpty()) {
-            Point current = queue.poll();
-            if (current.equals(goal)) break;
+        while (!q.isEmpty()) {
+            int[] cur = q.poll();
+            int r = cur[0], c = cur[1];
 
-            for (int[] d : dirs) {
-                int nr = current.y + d[1];
-                int nc = current.x + d[0];
+            if (r == goalRow && c == goalCol) {
+                found = true;
+                break;
+            }
 
-                if (nr < 0 || nc < 0 || nr >= rows || nc >= cols) continue;
-                if (visited[nr][nc] || maze.isWallTile(nr, nc)) continue;
-
+            for (int i = 0; i < 4; i++) {
+                int nr = r + dr[i];
+                int nc = c + dc[i];
+                if (!isValidTile(nr, nc)) continue;
+                // keep safe tile check (buffer) — prevents pathing into impossibly narrow spots
+                if (visited[nr][nc] || !isSafeTile(nr, nc)) continue;
                 visited[nr][nc] = true;
-                Point next = new Point(nc, nr);
-                parent.put(next, current);
-                queue.add(next);
+                prevR[nr][nc] = r;
+                prevC[nr][nc] = c;
+                q.add(new int[]{nr, nc});
             }
         }
 
-        // Reconstruct path
-        path.clear();
-        Point cur = goal;
-        while (parent.containsKey(cur)) {
-            path.add(0, cur);
-            cur = parent.get(cur);
+        if (!found) {
+            pathRow = pathCol = null;
+            pathIndex = 0;
+            return;
         }
+
+        // Reconstruct path
+        List<Integer> pr = new ArrayList<>();
+        List<Integer> pc = new ArrayList<>();
+        int r = goalRow, c = goalCol;
+        while (r != -1 && c != -1) {
+            pr.add(r);
+            pc.add(c);
+            int tr = prevR[r][c];
+            int tc = prevC[r][c];
+            r = tr;
+            c = tc;
+        }
+
+        Collections.reverse(pr);
+        Collections.reverse(pc);
+
+        pathRow = pr.stream().mapToInt(i -> i).toArray();
+        pathCol = pc.stream().mapToInt(i -> i).toArray();
+        pathIndex = 1;
     }
 
-    private boolean isColliding(double newX, double newY) {
-        int s = size;
-        int margin = safeDistance;
-        int left = (int) (newX + margin);
-        int right = (int) (newX + s - 1 - margin);
-        int top = (int) (newY + margin);
-        int bottom = (int) (newY + s - 1 - margin);
+    private boolean isValidTile(int r, int c) {
+        return r >= 0 && c >= 0 && r < maze.getRows() && c < maze.getCols();
+    }
 
-        for (int row = top / maze.tileSize; row <= bottom / maze.tileSize; row++) {
-            for (int col = left / maze.tileSize; col <= right / maze.tileSize; col++) {
-                if (maze.isWallTile(row, col)) {
-                    return true;
-                }
+    // collision uses Math.floor-based tile indices to match Player
+    private boolean isColliding(int newX, int newY) {
+        int left = (int) Math.floor(newX / (double) maze.tileSize);
+        int right = (int) Math.floor((newX + size - 1) / (double) maze.tileSize);
+        int top = (int) Math.floor(newY / (double) maze.tileSize);
+        int bottom = (int) Math.floor((newY + size - 1) / (double) maze.tileSize);
+
+        for (int r = top; r <= bottom; r++) {
+            for (int c = left; c <= right; c++) {
+                if (!isValidTile(r, c) || maze.isWallTile(r, c)) return true;
             }
         }
         return false;
     }
 
-    public void draw(Graphics g) {
-        g.setColor(color);
-        g.fillOval((int) x, (int) y, size, size);
+    // safety check for BFS (buffer helps avoid impossible spots)
+    private boolean isSafeTile(int r, int c) {
+        if (maze.isWallTile(r, c)) return false;
+        int buffer = 3; // your requested buffer
+        for (int dr = -buffer; dr <= buffer; dr++) {
+            for (int dc = -buffer; dc <= buffer; dc++) {
+                int rr = r + dr, cc = c + dc;
+                if (!isValidTile(rr, cc)) continue;
+                if (maze.isWallTile(rr, cc)) return false;
+            }
+        }
+        return true;
+    }
+    
+    // tile helpers (use floor to avoid rounding mismatch)
+    private int getTileRow(int y, int size, int tileSize) {
+        return (int) Math.floor((y + size / 2.0) / tileSize);
+    }
+
+    private int getTileCol(int x, int size, int tileSize) {
+        return (int) Math.floor((x + size / 2.0) / tileSize);
     }
 
     public boolean collidesWith(Player p) {
-        Rectangle ghostRect = new Rectangle((int) x, (int) y, size, size);
+        Rectangle ghostRect = new Rectangle(x, y, size, size);
         Rectangle playerRect = new Rectangle(p.x, p.y, p.size, p.size);
         return ghostRect.intersects(playerRect);
+    }
+
+    public void draw(Graphics g) {
+        // Draw ghost
+        g.setColor(Color.RED);
+        g.fillRect(x, y, size, size);
+
+        // Visualize path
+        if (pathRow != null && pathCol != null) {
+            g.setColor(Color.CYAN);
+            for (int i = 0; i < pathRow.length; i++) {
+                int cx = pathCol[i] * maze.tileSize + maze.tileSize / 2;
+                int cy = pathRow[i] * maze.tileSize + maze.tileSize / 2;
+                g.fillOval(cx - 3, cy - 3, 6, 6);
+
+                if (i > 0) {
+                    int px = pathCol[i - 1] * maze.tileSize + maze.tileSize / 2;
+                    int py = pathRow[i - 1] * maze.tileSize + maze.tileSize / 2;
+                    g.drawLine(px, py, cx, cy);
+                }
+            }
+            // mark current target
+            if (pathIndex < pathRow.length) {
+                g.setColor(Color.MAGENTA);
+                int tx = pathCol[pathIndex] * maze.tileSize + maze.tileSize / 2;
+                int ty = pathRow[pathIndex] * maze.tileSize + maze.tileSize / 2;
+                g.fillOval(tx - 5, ty - 5, 10, 10);
+            }
+        }
     }
 }
