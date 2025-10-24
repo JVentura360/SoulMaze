@@ -7,7 +7,7 @@ public class Maze {
     // Use 'X' for walls and ' ' (space) for paths
     public String[] mazeData = {
         "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "X                                                          XX                                                          X",
+        "X E                                                        XX                                                          X",
         "X                                                          XX                                                          X",
         "X                                                          XX                                                          X",
         "X                                                          XX                                                          X",
@@ -29,38 +29,38 @@ public class Maze {
         "X       X             X         X               X                     X                          X             X       X",
         "X       X             X         X               X                     X                          X             X       X",
         "X       X       XXXXXXX         X       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX       X         XXXXXXX       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X       X               X       X       XXXXXXXX        XXXXXXXX       X       X               X       X       X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X               X                      X               X               X               X",
-        "X               X               X               X                      X               X               X               X",
-        "X               X               X               X                      X               X               X               X",
-        "XXXXXXXXXXXXXXXXXXX       XXXXXXX               X          XX          X               XXXXXXX       XXXXXXXXXXXXXXXXXXX",
-        "XXXXXXXXXXXXXXXXXXX       XXXXXXX               X          XX          X               XXXXXXX       XXXXXXXXXXXXXXXXXXX",
-        "X               X               X               X                      X               X               X               X",
-        "X               X               X               X                      X               X               X               X",
-        "X               X               X               X                      X               X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X               X               X       X       X                      X       X       X               X               X",
-        "X       X       X               X       X       XXXXXXXX        XXXXXXXX       X       X               X       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
-        "X       X                       X       X                                      X       X                       X       X",
+        "X       X                       X       XGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG00000X       X                       X       X",
+        "X       X                       X       XGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG00000X       X                       X       X",
+        "X       X                       X       XGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG00000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X       X               X       X0000000XXXXXXXX00000000XXXXXXXX0000000X       X               X       X       X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X               X0000000000000000000000X               X               X               X",
+        "X               X               X               X00000000P0000000000000X               X               X               X",
+        "X               X               X               X0000000000000000000000X               X               X               X",
+        "XXXXXXXXXXXXXXXXXXX       XXXXXXX               X0000000000000000000000X               XXXXXXX       XXXXXXXXXXXXXXXXXXX",
+        "XXXXXXXXXXXXXXXXXXX       XXXXXXX               X0000000000000000000000X               XXXXXXX       XXXXXXXXXXXXXXXXXXX",
+        "X               X               X               X0000000000000000000000X               X               X               X",
+        "X               X               X               X0000000000000000000000X               X               X               X",
+        "X               X               X               X0000000000000000000000X               X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X               X               X       X0000000X0000000000000000000000X0000000X       X               X               X",
+        "X       X       X               X       X0000000XXXXXXXX00000000XXXXXXXX0000000X       X               X       X       X",
+        "X       X                       X       XGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG00000X       X                       X       X",
+        "X       X                       X       XGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG00000X       X                       X       X",
+        "X       X                       X       XGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG00000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
+        "X       X                       X       X00000000000000000000000000000000000000X       X                       X       X",
         "X       X       XXXXXXX         X       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX       X         XXXXXXX       X       X",
         "X       X             X                          X                     X               X         X             X       X",
         "X       X             X                          X                     X               X         X             X       X",
@@ -113,4 +113,28 @@ public class Maze {
     public int getRows() { return mazeData.length; }
     public int getCols() { return mazeData[0].length(); }
     
+    public Point getPlayerSpawn() {
+        for (int r = 0; r < mazeData.length; r++) {
+            for (int c = 0; c < mazeData[r].length(); c++) {
+                if (mazeData[r].charAt(c) == 'P') {
+                    return new Point(c * tileSize, r * tileSize);
+                }
+            }
+        }
+        return null; // Default (none found)
+    }
+
+    public Point getGhostSpawn() {
+        for (int r = 0; r < mazeData.length; r++) {
+            for (int c = 0; c < mazeData[r].length(); c++) {
+                if (mazeData[r].charAt(c) == 'E') {
+                    return new Point(c * tileSize, r * tileSize);
+                }
+            }
+        }
+        return null;
+    }
+    
 }
+
+

@@ -7,7 +7,10 @@ public class Player {
     public int speed = 4;
     public int size = 60;
     private Maze maze;
-
+    private Soul heldSoul = null;
+    boolean isHoldingSoul() { return heldSoul != null; }
+    public Soul getHeldSoul() { return heldSoul; }
+    
     private static final int GAP = 2; // solid 2px gap between player and wall
 
     boolean up, down, left, right;
@@ -31,6 +34,10 @@ public class Player {
         if (up) nextY -= speed;
         if (down) nextY += speed;
         if (canMove(x, nextY)) y = nextY;
+    }
+    
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, size, size);
     }
 
     /**
@@ -63,10 +70,29 @@ public class Player {
         }
         return true;
     }
+    
+    public void pickUpSoul(Soul soul) {
+        heldSoul = soul;
+    }
+
+    public void dropSoul(int x, int y) {
+        if (heldSoul != null) {
+            heldSoul.setPosition(x, y);
+            heldSoul = null;
+        }
+    }
+
+    public void removeHeldSoul() {
+        heldSoul = null;
+    }
 
     public void draw(Graphics g) {
         g.setColor(Color.GREEN);
         g.fillRect(x, y, size, size);
+        
+        if (heldSoul != null) {
+            heldSoul.drawAt(g, x + size / 4, y - 20); // draws slightly above player
+        }
     }
 
     // Input handling

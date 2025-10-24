@@ -13,7 +13,6 @@ public class Ghost {
     // Pathfinding
     private int[] pathRow, pathCol;
     private int pathIndex = 0;
-    private long lastPathUpdate = 0;
     private Random rnd = new Random();
 
     // track player's last tile to avoid re-pathing on micro-movements
@@ -53,7 +52,6 @@ public class Ghost {
 
         if (needRecalc) {
             computePath(ghostRow, ghostCol, playerRow, playerCol);
-            lastPathUpdate = System.currentTimeMillis();
             lastPlayerRow = playerRow;
             lastPlayerCol = playerCol;
         }
@@ -271,5 +269,52 @@ public class Ghost {
                 g.fillOval(tx - 5, ty - 5, 10, 10);
             }
         }
+    }
+    
+    public static Grave spawnRandom(Maze maze, List<Grave> existingGraves, Color color) {
+        Random rand = new Random();
+        int rows = maze.getRows();
+        int cols = maze.getCols();
+        int tileSize = maze.tileSize;
+
+        List<Point> validSpots = new ArrayList<>();
+
+        // Collect all open tiles that are not walls and not near existing graves
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                if (maze.mazeData[r].charAt(c) != ' ') continue;
+                boolean blocked = false;
+
+                // Check 1-tile radius buffer (so no grave is beside another)
+                for (Grave g : existingGraves) {
+                    int gr = g.y / tileSize;
+                    int gc = g.x / tileSize;
+
+                    int dr = Math.abs(r - gr);
+                    int dc = Math.abs(c - gc);
+
+                    if (dr <= 1 && dc <= 1) { // any grave in 8-neighbor area blocks spawn
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                if (!blocked) {
+                    validSpots.add(new Point(c, r));
+                }
+            }
+        }
+
+        if (validSpots.isEmpty()) {
+            System.out.println("⚠ No valid spots for grave!");
+            return null;
+        }
+
+        // pick random valid spot
+        Point chosen = validSpots.get(rand.nextInt(validSpots.size()));
+        int x = chosen.x * tileSize;
+        int y = chosen.y * tileSize;
+
+        return new Grave(x, y, color);
     }
 }
