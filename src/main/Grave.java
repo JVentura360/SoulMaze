@@ -2,6 +2,7 @@ package main;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.Arrays;
 
 public class Grave {
 	private static final int SIZE = 50;
@@ -48,6 +49,10 @@ public class Grave {
         // Shuffle to randomize selection
         Collections.shuffle(graveTiles, rand);
 
+        // Create a list of available colors for unique assignment
+        List<Color> availableColors = new ArrayList<>(Arrays.asList(COLORS));
+        Collections.shuffle(availableColors, rand);
+
         for (int i = 0; i < graveTiles.size() && graves.size() < count; i++) {
             Point p = graveTiles.get(i);
             int col = p.x / maze.tileSize;
@@ -56,7 +61,7 @@ public class Grave {
             // Skip invalid spots
             if (maze.isWall(row, col)) continue;
 
-            // Check adjacency — ensure no existing grave is within 1 tile (8-neighbor safe zone)
+            // Check adjacency — ensure no existing grave is within 2 tiles (larger safe zone)
             boolean tooClose = false;
             for (Grave g : graves) {
                 int gr = g.y / maze.tileSize;
@@ -65,7 +70,7 @@ public class Grave {
                 int dr = Math.abs(row - gr);
                 int dc = Math.abs(col - gc);
 
-                if (dr <= 1 && dc <= 1) { // too close
+                if (dr <= 2 && dc <= 2) { // larger safe zone to prevent overlap
                     tooClose = true;
                     break;
                 }
@@ -73,9 +78,11 @@ public class Grave {
 
             if (tooClose) continue;
 
-            // Choose a random color from pool
-            Color color = COLORS[rand.nextInt(COLORS.length)];
-            graves.add(new Grave(p.x, p.y, color));
+            // Use next available unique color
+            if (graves.size() < availableColors.size()) {
+                Color color = availableColors.get(graves.size());
+                graves.add(new Grave(p.x, p.y, color));
+            }
         }
 
         return graves;

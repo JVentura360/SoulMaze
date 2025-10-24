@@ -151,16 +151,42 @@ public class Soul {
                 Rectangle rect = new Rectangle(p.x, p.y, SIZE, SIZE);
 
                 boolean overlap = false;
+                
+                // Check collision with other souls
                 for (Soul s : souls) {
                     if (s.getBounds().intersects(rect)) {
                         overlap = true;
                         break;
                     }
                 }
+                
+                // Check collision with graves
+                if (!overlap) {
+                    for (Grave g : graves) {
+                        if (g.getBounds().intersects(rect)) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                }
 
+                // Check if the soul would be on a wall tile
+                boolean onWall = false;
                 int col = p.x / maze.tileSize;
                 int row = p.y / maze.tileSize;
-                if (!overlap && !maze.isWall(row, col)) {
+                
+                // Check all tiles the soul would occupy
+                for (int r = row; r < row + (SIZE / maze.tileSize) + 1; r++) {
+                    for (int c = col; c < col + (SIZE / maze.tileSize) + 1; c++) {
+                        if (maze.isWall(r, c)) {
+                            onWall = true;
+                            break;
+                        }
+                    }
+                    if (onWall) break;
+                }
+                
+                if (!overlap && !onWall) {
                     souls.add(new Soul(p.x, p.y, color));
                     emptyTiles.remove(i);
                     break;

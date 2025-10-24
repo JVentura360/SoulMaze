@@ -237,6 +237,27 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
             backgroundMusic.stop();
         }
         
+        // Show StartGamePanel transition
+        showStartGameTransition();
+    }
+    
+    private void showStartGameTransition() {
+        // Switch to transition panel
+        parentFrame.getContentPane().removeAll();
+        TransitionPanel transitionPanel = new TransitionPanel(parentFrame, "src/assets/Images/StartGamePanel.png", new Runnable() {
+            @Override
+            public void run() {
+                // Transition complete, start the game
+                startActualGame();
+            }
+        });
+        parentFrame.add(transitionPanel);
+        parentFrame.pack();
+        parentFrame.revalidate();
+        parentFrame.repaint();
+    }
+    
+    private void startActualGame() {
         // Switch to game panel
         parentFrame.getContentPane().removeAll();
         GamePanel gamePanel = new GamePanel();
