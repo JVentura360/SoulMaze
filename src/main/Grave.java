@@ -1,15 +1,30 @@
 package main;
-import java.awt.*;
-import java.util.*;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Random;
+import javax.swing.ImageIcon;
 
 public class Grave {
 	private static final int SIZE = 50;
-    private static final Color[] COLORS = {
-        Color.RED, Color.ORANGE, Color.YELLOW, 
-        Color.BLUE, Color.GREEN, new Color(128, 0, 128) // purple
-    };
+    private static final Map<Color, Image> GRAVE_SPRITES = new HashMap<>();
+    static {
+        GRAVE_SPRITES.put(Color.BLUE, new ImageIcon("src/assets/Images/BlueGrave.png").getImage());
+        GRAVE_SPRITES.put(Color.RED, new ImageIcon("src/assets/Images/RedGrave.png").getImage());
+        GRAVE_SPRITES.put(Color.ORANGE, new ImageIcon("src/assets/Images/OrangeGrave.png").getImage());
+        GRAVE_SPRITES.put(Color.YELLOW, new ImageIcon("src/assets/Images/YellowGrave.png").getImage());
+        GRAVE_SPRITES.put(Color.GREEN, new ImageIcon("src/assets/Images/GreenGrave.png").getImage());
+        GRAVE_SPRITES.put(new Color(128, 0, 128), new ImageIcon("src/assets/Images/PurpleGrave.png").getImage());
+    }
 
     int x;
 	int y;
@@ -22,10 +37,13 @@ public class Grave {
     }
 
     public void draw(Graphics g) {
-        g.setColor(color);
-        g.fillRoundRect(x, y, SIZE, SIZE, 10, 10);
-        g.setColor(Color.BLACK);
-        g.drawRoundRect(x, y, SIZE, SIZE, 10, 10);
+        Image img = GRAVE_SPRITES.getOrDefault(color, GRAVE_SPRITES.get(Color.BLUE));
+        if (img != null) {
+            g.drawImage(img, x, y, SIZE, SIZE, null);
+        } else {
+            g.setColor(Color.MAGENTA);
+            g.fillRect(x, y, SIZE, SIZE);
+        }
     }
 
     public Rectangle getBounds() {
@@ -50,6 +68,9 @@ public class Grave {
         Collections.shuffle(graveTiles, rand);
 
         // Create a list of available colors for unique assignment
+        Color[] COLORS = {
+            Color.RED, Color.ORANGE, Color.YELLOW, Color.BLUE, Color.GREEN, new Color(128, 0, 128)
+        };
         List<Color> availableColors = new ArrayList<>(Arrays.asList(COLORS));
         Collections.shuffle(availableColors, rand);
 

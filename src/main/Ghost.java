@@ -3,6 +3,7 @@ package main;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import javax.swing.ImageIcon;
 
 public class Ghost {
 	public int x, y;
@@ -17,6 +18,9 @@ public class Ghost {
 
     // track player's last tile to avoid re-pathing on micro-movements
     private int lastPlayerRow = -1, lastPlayerCol = -1;
+    
+    // Ghost sprite
+    private static final Image GHOST_IMG = new ImageIcon("src/assets/Images/Ghost.png").getImage();
 
     public Ghost(int x, int y, Maze maze) {
         this.x = x;
@@ -243,9 +247,14 @@ public class Ghost {
     }
 
     public void draw(Graphics g) {
-        // Draw ghost
-        g.setColor(Color.RED);
-        g.fillRect(x, y, size, size);
+        // Draw ghost sprite
+        if (GHOST_IMG != null) {
+            g.drawImage(GHOST_IMG, x, y, size, size, null);
+        } else {
+            // Fallback to red rectangle if sprite fails to load
+            g.setColor(Color.RED);
+            g.fillRect(x, y, size, size);
+        }
 
         // Visualize path
         if (pathRow != null && pathCol != null) {

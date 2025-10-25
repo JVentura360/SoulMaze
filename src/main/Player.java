@@ -1,5 +1,10 @@
 package main;
-import java.awt.*;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
+import javax.swing.ImageIcon;
 import java.awt.event.KeyEvent;
 
 public class Player {
@@ -14,6 +19,12 @@ public class Player {
     private static final int GAP = 2; // solid 2px gap between player and wall
 
     boolean up, down, left, right;
+
+    private static final String SPRITE_DIR = "src/assets/Images/";
+    private static final Image PLAYER_UP = new ImageIcon(SPRITE_DIR + "PlayerUp.png").getImage();
+    private static final Image PLAYER_DOWN = new ImageIcon(SPRITE_DIR + "PlayerDown.png").getImage();
+    private static final Image PLAYER_LEFT = new ImageIcon(SPRITE_DIR + "PlayerLeft.png").getImage();
+    private static final Image PLAYER_RIGHT = new ImageIcon(SPRITE_DIR + "PlayerRight.png").getImage();
 
     public Player(int x, int y, Maze maze) {
         this.x = x;
@@ -87,11 +98,19 @@ public class Player {
     }
 
     public void draw(Graphics g) {
-        g.setColor(Color.GREEN);
-        g.fillRect(x, y, size, size);
-        
+        Image sprite = PLAYER_DOWN;
+        if (up) sprite = PLAYER_UP;
+        else if (down) sprite = PLAYER_DOWN;
+        else if (left) sprite = PLAYER_LEFT;
+        else if (right) sprite = PLAYER_RIGHT;
+        if (sprite != null) {
+            g.drawImage(sprite, x, y, size, size, null);
+        } else {
+            g.setColor(Color.GREEN);
+            g.fillRect(x, y, size, size);
+        }
         if (heldSoul != null) {
-            heldSoul.drawAt(g, x + size / 4, y - 20); // draws slightly above player
+            heldSoul.drawAt(g, x + size / 4, y - 20);
         }
     }
 

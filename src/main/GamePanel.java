@@ -70,7 +70,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         // Define specific ghost spawn positions (adjusted to avoid walls)
         Point[] ghostPositions = {
             new Point(10, 50),      // Upper left (safer position)
-            new Point(1100, 50),     // Upper right (safer position)
+            new Point(1120, 50),     // Upper right (safer position)
             new Point(600, 650)      // Lower middle (safer position)
         };
         

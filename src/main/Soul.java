@@ -1,18 +1,33 @@
 package main;
-import java.awt.*;
-import java.util.*;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Point;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+import javax.swing.ImageIcon;
 
 public class Soul {
-	private static final int SIZE = 40;
+    private static final int SIZE = 40;
+    private static final Map<Color, Image> SOUL_SPRITES = new HashMap<>();
+    static {
+        SOUL_SPRITES.put(Color.BLUE, new ImageIcon(Soul.class.getResource("/assets/Images/BlueSoul.png")).getImage());
+        SOUL_SPRITES.put(Color.RED, new ImageIcon(Soul.class.getResource("/assets/Images/RedSoul.png")).getImage());
+        SOUL_SPRITES.put(Color.ORANGE, new ImageIcon(Soul.class.getResource("/assets/Images/OrangeSoul.png")).getImage());
+        SOUL_SPRITES.put(Color.YELLOW, new ImageIcon(Soul.class.getResource("/assets/Images/YellowSoul.png")).getImage());
+        SOUL_SPRITES.put(Color.GREEN, new ImageIcon(Soul.class.getResource("/assets/Images/GreenSoul.png")).getImage());
+        SOUL_SPRITES.put(new Color(128, 0, 128), new ImageIcon(Soul.class.getResource("/assets/Images/PurpleSoul.png")).getImage());
+        System.out.println("Soul Image Path: " + Soul.class.getResource("/assets/Images/BlueSoul.png"));
+    }
 
     private int x, y;
     private Color color;
-
-    // Animation
-    private double glowPhase = Math.random() * Math.PI * 2;
-    private static final double GLOW_SPEED = 0.05;
-    private static final int GLOW_RADIUS = 15;
 
     public Soul(int x, int y, Color color) {
         this.x = x;
@@ -20,65 +35,36 @@ public class Soul {
         this.color = color;
     }
 
-    public void update() {
-        glowPhase += GLOW_SPEED;
-        if (glowPhase > Math.PI * 2) glowPhase -= Math.PI * 2;
-    }
-
     public void draw(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g;
-
-        // --- Glow effect ---
-        float alpha = (float) ((Math.sin(glowPhase) + 1) / 2 * 0.3 + 0.2);
-        int glowSize = SIZE + GLOW_RADIUS;
-        int glowX = x - (glowSize - SIZE) / 2;
-        int glowY = y - (glowSize - SIZE) / 2;
-
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        g2d.setColor(color);
-        g2d.fillOval(glowX, glowY, glowSize, glowSize);
-
-        // Reset opacity
-        g2d.setComposite(AlphaComposite.SrcOver);
-
-        // --- Core soul ---
-        g2d.setColor(color);
-        g2d.fillOval(x, y, SIZE, SIZE);
-
-        // --- Outline ---
-        g2d.setColor(Color.WHITE);
-        g2d.setStroke(new BasicStroke(2));
-        g2d.drawOval(x, y, SIZE, SIZE);
+        Image img = SOUL_SPRITES.getOrDefault(color, SOUL_SPRITES.get(Color.BLUE));
+        if (img != null) {
+            g.drawImage(img, x, y, SIZE, SIZE, null);
+        } else {
+            g.setColor(Color.MAGENTA);
+            g.fillRect(x, y, SIZE, SIZE);
+        }
     }
-    
-    /**
-     * Draw the soul at an arbitrary position (used when the player is holding it).
-     * This reuses the same glow logic as draw().
-     */
+
+    /** Draw the soul at a different location (used when player is holding it) */
     public void drawAt(Graphics g, int drawX, int drawY) {
-        Graphics2D g2d = (Graphics2D) g;
-
-        // Glow
-        float alpha = (float) ((Math.sin(glowPhase) + 1) / 2 * 0.3 + 0.2);
-        int glowSize = SIZE + GLOW_RADIUS;
-        int glowX = drawX - (glowSize - SIZE) / 2;
-        int glowY = drawY - (glowSize - SIZE) / 2;
-
-        Composite oldComp = g2d.getComposite();
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        g2d.setColor(color);
-        g2d.fillOval(glowX, glowY, glowSize, glowSize);
-        g2d.setComposite(oldComp);
-
-        // Core soul
-        g2d.setColor(color);
-        g2d.fillOval(drawX, drawY, SIZE, SIZE);
-
-        // Outline
-        g2d.setColor(Color.WHITE);
-        g2d.setStroke(new BasicStroke(2));
-        g2d.drawOval(drawX, drawY, SIZE, SIZE);
+        Image img = SOUL_SPRITES.getOrDefault(color, SOUL_SPRITES.get(Color.BLUE));
+        if (img != null) {
+            g.drawImage(img, drawX, drawY, SIZE, SIZE, null);
+        } else {
+            g.setColor(Color.MAGENTA);
+            g.fillRect(drawX, drawY, SIZE, SIZE);
+        }
     }
+
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, SIZE, SIZE);
+    }
+
+    public Color getColor() { return color; }
+    public void setPosition(int x, int y) { this.x = x; this.y = y; }
+
+    // Animation stub—does nothing if you don't want glow. Used by main GamePanel.
+    public void update() {}
 
     /**
      * Respawn an existing soul somewhere else in the maze on an empty tile.
@@ -119,10 +105,6 @@ public class Soul {
         soul.setPosition(p.x, p.y);
     }
 
-    public Rectangle getBounds() {
-        return new Rectangle(x, y, SIZE, SIZE);
-    }
-
     /**
      * Generates one Soul per Grave color.
      * Souls spawn only on empty ' ' tiles and do not overlap with each other or walls.
@@ -141,7 +123,6 @@ public class Soul {
             }
         }
 
-        // Shuffle possible spawn tiles
         Collections.shuffle(emptyTiles, rand);
 
         for (Grave grave : graves) {
@@ -151,7 +132,7 @@ public class Soul {
                 Rectangle rect = new Rectangle(p.x, p.y, SIZE, SIZE);
 
                 boolean overlap = false;
-                
+
                 // Check collision with other souls
                 for (Soul s : souls) {
                     if (s.getBounds().intersects(rect)) {
@@ -159,7 +140,7 @@ public class Soul {
                         break;
                     }
                 }
-                
+
                 // Check collision with graves
                 if (!overlap) {
                     for (Grave g : graves) {
@@ -174,18 +155,17 @@ public class Soul {
                 boolean onWall = false;
                 int col = p.x / maze.tileSize;
                 int row = p.y / maze.tileSize;
-                
-                // Check all tiles the soul would occupy
-                for (int r = row; r < row + (SIZE / maze.tileSize) + 1; r++) {
-                    for (int c = col; c < col + (SIZE / maze.tileSize) + 1; c++) {
-                        if (maze.isWall(r, c)) {
+
+                for (int rowIdx = row; rowIdx < row + (SIZE / maze.tileSize) + 1; rowIdx++) {
+                    for (int colIdx = col; colIdx < col + (SIZE / maze.tileSize) + 1; colIdx++) {
+                        if (maze.isWall(rowIdx, colIdx)) {
                             onWall = true;
                             break;
                         }
                     }
                     if (onWall) break;
                 }
-                
+
                 if (!overlap && !onWall) {
                     souls.add(new Soul(p.x, p.y, color));
                     emptyTiles.remove(i);
@@ -195,14 +175,5 @@ public class Soul {
         }
 
         return souls;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setPosition(int x, int y) {
-        this.x = x;
-        this.y = y;
     }
 }
