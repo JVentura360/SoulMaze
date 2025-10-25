@@ -7,6 +7,9 @@ public class Maze {
     
     // Ground background sprite
     private static final Image GROUND_IMG = new ImageIcon("src/assets/Images/Ground.png").getImage();
+    
+    // Wall sprite
+    private static final Image WALL_IMG = new ImageIcon("src/assets/Images/Wall.png").getImage();
 
     // Use 'X' for walls and ' ' (space) for paths
     public String[] mazeData = {
@@ -101,11 +104,16 @@ public class Maze {
         }
         
         // Draw walls on top of ground
-        g.setColor(Color.DARK_GRAY);
         for (int r = 0; r < mazeData.length; r++) {
             for (int c = 0; c < mazeData[r].length(); c++) {
                 if (mazeData[r].charAt(c) == 'X') {
-                    g.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+                    if (WALL_IMG != null) {
+                        g.drawImage(WALL_IMG, c * tileSize, r * tileSize, tileSize, tileSize, null);
+                    } else {
+                        // Fallback to dark gray rectangle if sprite fails to load
+                        g.setColor(Color.DARK_GRAY);
+                        g.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+                    }
                 }
             }
         }
