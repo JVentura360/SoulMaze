@@ -7,7 +7,7 @@ import javax.swing.ImageIcon;
 
 public class Ghost {
 	public int x, y;
-    public int speed = 2;
+    public double speed = 1.4;
     public int size = 50;
     private Maze maze;
 
