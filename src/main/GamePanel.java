@@ -3,6 +3,7 @@ package main;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -23,7 +24,9 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private LevelManager levelManager;
     private boolean gameOver = false;
     private boolean levelCompleted = false;
-
+    private Image fogImage = new ImageIcon("src/assets/Images/fog.png").getImage();
+    private int fogRadius = 200; // radius around player to clear
+    private double fogPulse = 0;
     // === Constructor ===
     public GamePanel() {
         this(new LevelManager());
@@ -123,7 +126,11 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     // === Game Logic ===
     private void update() {
         if (gameOver || levelCompleted) return;
-
+        
+	// Pulse fog radius gently
+        fogPulse += 0.05;
+        fogRadius = 150 + (int)(Math.sin(fogPulse) * 10);
+        
         // Update player
         player.update();
         
@@ -233,9 +240,10 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 16));
         g.drawString("Score: " + levelManager.getScore(), 20, 30);
-        g.drawString("Level: " + levelManager.getCurrentLevel(), 20, 50);
-        g.drawString(levelManager.getLevelDescription(), 20, 70);
-
+        g.drawString(levelManager.getLevelDescription(), 20, 50);
+        
+        // === Draw fog overlay ===
+        drawFog(g);
         if (gameOver) {
             g.setColor(Color.RED);
             g.setFont(new Font("Arial", Font.BOLD, 40));
@@ -317,6 +325,50 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
             souls.add(held);
             player.removeHeldSoul();
         }
+    }
+    
+    private void drawFog(Graphics g) {
+        int w = getWidth();
+        int h = getHeight();
+
+        // Create a transparent buffer
+        BufferedImage fogLayer = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = fogLayer.createGraphics();
+
+        // Draw the fog background (semi-transparent dark layer)
+        g2.setColor(new Color(0, 0, 0, 210)); // 210 = dark but not fully opaque
+        g2.fillRect(0, 0, w, h);
+
+        // Optional: overlay fog texture for atmosphere
+        g2.setComposite(AlphaComposite.SrcOver);
+        g2.drawImage(fogImage, 0, 0, w, h, null);
+
+        // === Smooth circular reveal around player ===
+        int px = player.x + player.size / 2;
+        int py = player.y + player.size / 2;
+        int radius = fogRadius;
+
+        // Create a radial gradient that goes from full clear (center) to opaque (edges)
+        RadialGradientPaint gradient = new RadialGradientPaint(
+            new Point(px, py),
+            radius,
+            new float[]{0.7f, 0.8f, 1f}, // smooth fade
+            new Color[]{
+                new Color(0f, 0f, 0f, 1f),  // center fully erased
+                new Color(0f, 0f, 0f, 0.3f), // mid fade
+                new Color(0f, 0f, 0f, 0f)   // outer transparent
+            }
+        );
+
+        // Use the gradient as an erase mask
+        g2.setPaint(gradient);
+        g2.setComposite(AlphaComposite.DstOut);
+        g2.fillOval(px - radius, py - radius, radius * 2, radius * 2);
+
+        g2.dispose();
+
+        // Draw the fog layer over the main scene
+        g.drawImage(fogLayer, 0, 0, null);
     }
     
     // === Reset Game (optional, for restart) ===

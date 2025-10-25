@@ -14,7 +14,7 @@ import java.util.Random;
 import javax.swing.ImageIcon;
 
 public class Soul {
-    private static final int SIZE = 40;
+    private static final int SIZE = 50;
     private static final Map<Color, Image> SOUL_SPRITES = new HashMap<>();
     static {
         SOUL_SPRITES.put(Color.BLUE, new ImageIcon(Soul.class.getResource("/assets/Images/BlueSoul.png")).getImage());
