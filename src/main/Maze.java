@@ -1,8 +1,12 @@
 package main;
 import java.awt.*;
+import javax.swing.ImageIcon;
 
 public class Maze {
     public int tileSize = 10; // each tile = 32 pixels
+    
+    // Ground background sprite
+    private static final Image GROUND_IMG = new ImageIcon("src/assets/Images/Ground.png").getImage();
 
     // Use 'X' for walls and ' ' (space) for paths
     public String[] mazeData = {
@@ -87,6 +91,16 @@ public class Maze {
     };
 
     public void draw(Graphics g) {
+        // Draw ground background as full screen image (1024x804)
+        if (GROUND_IMG != null) {
+            g.drawImage(GROUND_IMG, 0, 0, 1200,781, null);
+        } else {
+            // Fallback to black background if sprite fails to load
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, 1200,781 );
+        }
+        
+        // Draw walls on top of ground
         g.setColor(Color.DARK_GRAY);
         for (int r = 0; r < mazeData.length; r++) {
             for (int c = 0; c < mazeData[r].length(); c++) {
