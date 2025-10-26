@@ -2,9 +2,12 @@ package main;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Point;
+import java.awt.RadialGradientPaint;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -28,6 +31,8 @@ public class Soul {
 
     private int x, y;
     private Color color;
+    private float glowPhase = 0; // animation phase
+    private static final float GLOW_SPEED = 0.05f; // how fast it pulses
 
     public Soul(int x, int y, Color color) {
         this.x = x;
@@ -36,24 +41,75 @@ public class Soul {
     }
 
     public void draw(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
         Image img = SOUL_SPRITES.getOrDefault(color, SOUL_SPRITES.get(Color.BLUE));
+
+        // --- Pulsing glow setup ---
+        float pulse = (float) ((Math.sin(glowPhase) + 1) / 2); // oscillates 0–1
+        int baseGlowSize = SIZE + 30;
+        int glowSize = (int) (baseGlowSize + pulse * 10); // expand slightly
+        int glowOffset = (glowSize - SIZE) / 2;
+
+        int alpha = (int) (80 + pulse * 100); // fade in/out brightness
+        Color glowColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+
+        // Smooth drawing
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(new RadialGradientPaint(
+            new Point(x + SIZE / 2, y + SIZE / 2),
+            glowSize / 2f,
+            new float[]{0f, 1f},
+            new Color[]{glowColor, new Color(0, 0, 0, 0)}
+        ));
+        g2.fillOval(x - glowOffset, y - glowOffset, glowSize, glowSize);
+
+        // --- Draw the soul sprite ---
         if (img != null) {
-            g.drawImage(img, x, y, SIZE, SIZE, null);
+            g2.drawImage(img, x, y, SIZE, SIZE, null);
         } else {
-            g.setColor(Color.MAGENTA);
-            g.fillRect(x, y, SIZE, SIZE);
+            g2.setColor(Color.MAGENTA);
+            g2.fillRect(x, y, SIZE, SIZE);
         }
+
+        g2.dispose();
     }
+
 
     /** Draw the soul at a different location (used when player is holding it) */
     public void drawAt(Graphics g, int drawX, int drawY) {
+        Graphics2D g2 = (Graphics2D) g.create();
         Image img = SOUL_SPRITES.getOrDefault(color, SOUL_SPRITES.get(Color.BLUE));
+
+        // --- Pulsing glow setup ---
+        float pulse = (float) ((Math.sin(glowPhase) + 1) / 2);
+
+        // Brighter and bigger when held
+        int baseGlowSize = SIZE + 45; // +30 when dropped, +45 when held
+        int glowSize = (int) (baseGlowSize + pulse * 12);
+        int glowOffset = (glowSize - SIZE) / 2;
+
+        int alpha = (int) (120 + pulse * 135); // stronger brightness (120–255)
+        Color glowColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+
+        // Smooth glowing aura
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(new RadialGradientPaint(
+            new Point(drawX + SIZE / 2, drawY + SIZE / 2),
+            glowSize / 2f,
+            new float[]{0f, 1f},
+            new Color[]{glowColor, new Color(0, 0, 0, 0)}
+        ));
+        g2.fillOval(drawX - glowOffset, drawY - glowOffset, glowSize, glowSize);
+
+        // --- Draw the soul sprite ---
         if (img != null) {
-            g.drawImage(img, drawX, drawY, SIZE, SIZE, null);
+            g2.drawImage(img, drawX, drawY, SIZE, SIZE, null);
         } else {
-            g.setColor(Color.MAGENTA);
-            g.fillRect(drawX, drawY, SIZE, SIZE);
+            g2.setColor(Color.MAGENTA);
+            g2.fillRect(drawX, drawY, SIZE, SIZE);
         }
+
+        g2.dispose();
     }
 
     public Rectangle getBounds() {
@@ -63,8 +119,10 @@ public class Soul {
     public Color getColor() { return color; }
     public void setPosition(int x, int y) { this.x = x; this.y = y; }
 
-    // Animation stub—does nothing if you don't want glow. Used by main GamePanel.
-    public void update() {}
+    public void update() {
+        glowPhase += GLOW_SPEED;
+        if (glowPhase > Math.PI * 2) glowPhase -= Math.PI * 2;
+    }
 
     /**
      * Respawn an existing soul somewhere else in the maze on an empty tile.
@@ -176,4 +234,6 @@ public class Soul {
 
         return souls;
     }
+    
+    
 }

@@ -65,9 +65,9 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
     
     private void loadBackgroundMusic() {
         try {
-            File musicFile = new File("src/assets/Music/MainMenuBackgroundSong.wav");
+            File musicFile = new File("src/assets/Music/MainMenu.wav");
             if (!musicFile.exists()) {
-                musicFile = new File("src/assets/Music/MainMenuBackgroundSong.mp3");
+                musicFile = new File("src/assets/Music/MainMenu.mp3");
             }
             
             if (musicFile.exists()) {
