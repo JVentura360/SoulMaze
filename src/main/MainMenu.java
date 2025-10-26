@@ -5,59 +5,95 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
-public class MainMenu extends JPanel implements MouseListener, MouseMotionListener {
+public class MainMenu extends JPanel {
     private JFrame parentFrame;
     private Image backgroundImage;
-    private Image startButtonImage;
-    private Image exitButtonImage;
-    private Image startButtonHoverImage;
-    private Image exitButtonHoverImage;
-    
-    private boolean startHovered = false;
-    private boolean exitHovered = false;
+    private JButton playButton;
+    private JButton rankButton;
+    private JButton exitButton;
     
     public MainMenu(JFrame parent) {
         this.parentFrame = parent;
+        setLayout(null);
         setPreferredSize(new Dimension(1280, 800));
         setBackground(Color.BLACK);
-        addMouseListener(this);
-        addMouseMotionListener(this);
         
         loadImages();
+        setupButtons();
     }
     
     private void loadImages() {
         try {
             // Load background image
             backgroundImage = new ImageIcon("src/assets/Images/mainMenuImage.png").getImage();
-            
-            // Load button images
-            startButtonImage = new ImageIcon("src/assets/Images/StartButton.png").getImage();
-            exitButtonImage = new ImageIcon("src/assets/Images/ExitButton.png").getImage();
-            
-            // For hover effects, we'll create slightly brighter versions
-            startButtonHoverImage = createHoverImage(startButtonImage);
-            exitButtonHoverImage = createHoverImage(exitButtonImage);
-            
         } catch (Exception e) {
-            System.err.println("Error loading images: " + e.getMessage());
-            // Fallback to colored rectangles if images fail to load
+            System.err.println("Error loading background image: " + e.getMessage());
         }
     }
     
-    private Image createHoverImage(Image original) {
-        // Create a slightly brighter version for hover effect
-        BufferedImage buffered = new BufferedImage(original.getWidth(null), original.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = buffered.createGraphics();
-        g2d.drawImage(original, 0, 0, null);
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, original.getWidth(null), original.getHeight(null));
-        g2d.dispose();
-        return buffered;
+    private void setupButtons() {
+        // Load and scale Start/Play button
+        ImageIcon originalStartIcon = new ImageIcon("src/assets/Images/StartButton.png");
+        Image scaledStartImage = originalStartIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        ImageIcon scaledStartIcon = new ImageIcon(scaledStartImage);
+        
+        ImageIcon hoverStartIcon = new ImageIcon("src/assets/Images/StartButtonHover.png");
+        System.out.println("Start hover icon loaded: " + (hoverStartIcon.getImage() != null));
+        Image hoverStartScaled = hoverStartIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        ImageIcon scaledHoverStartIcon = new ImageIcon(hoverStartScaled);
+        
+        playButton = new JButton(scaledStartIcon);
+        playButton.setBounds(410, 650, 125, 125);
+        playButton.setRolloverIcon(scaledHoverStartIcon);
+        playButton.setBorderPainted(false);
+        playButton.setContentAreaFilled(false);
+        playButton.setFocusPainted(false);
+        playButton.setOpaque(false);
+        playButton.addActionListener(e -> startGame());
+        add(playButton);
+        
+        // Load and scale Rank button
+        ImageIcon originalRankIcon = new ImageIcon("src/assets/Images/RankButton.png");
+        Image scaledRankImage = originalRankIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        ImageIcon scaledRankIcon = new ImageIcon(scaledRankImage);
+        
+        ImageIcon hoverRankIcon = new ImageIcon("src/assets/Images/RankButtonHover.png");
+        System.out.println("Rank hover icon loaded: " + (hoverRankIcon.getImage() != null));
+        Image hoverRankScaled = hoverRankIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        ImageIcon scaledHoverRankIcon = new ImageIcon(hoverRankScaled);
+        
+        rankButton = new JButton(scaledRankIcon);
+        rankButton.setBounds(580, 650, 125, 125);
+        rankButton.setRolloverIcon(scaledHoverRankIcon);
+        rankButton.setBorderPainted(false);
+        rankButton.setContentAreaFilled(false);
+        rankButton.setFocusPainted(false);
+        rankButton.setOpaque(false);
+        rankButton.addActionListener(e -> showRankings());
+        add(rankButton);
+        
+        // Load and scale Exit button
+        ImageIcon originalExitIcon = new ImageIcon("src/assets/Images/ExitButton.png");
+        Image scaledExitImage = originalExitIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        ImageIcon scaledExitIcon = new ImageIcon(scaledExitImage);
+        
+        ImageIcon hoverExitIcon = new ImageIcon("src/assets/Images/ExitButtonHover.png");
+        System.out.println("Exit hover icon loaded: " + (hoverExitIcon.getImage() != null));
+        Image hoverExitScaled = hoverExitIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        ImageIcon scaledHoverExitIcon = new ImageIcon(hoverExitScaled);
+        
+        exitButton = new JButton(scaledExitIcon);
+        exitButton.setBounds(760, 650, 125, 125);
+        exitButton.setRolloverIcon(scaledHoverExitIcon);
+        exitButton.setBorderPainted(false);
+        exitButton.setContentAreaFilled(false);
+        exitButton.setFocusPainted(false);
+        exitButton.setOpaque(false);
+        exitButton.addActionListener(e -> exitGame());
+        add(exitButton);
     }
     
-
+    
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -81,93 +117,10 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         int titleY = 150;
         g2d.drawString(title, titleX, titleY);
         
-        // Draw buttons horizontally aligned below title
-        int buttonY = 650; // Position below title
-        int startButtonX = (getWidth() - 200) / 2 - 120; // Left of center
-        int exitButtonX = (getWidth() - 200) / 2 + 120;  // Right of center
-        
-        drawButton(g2d, startButtonImage, startButtonHoverImage, startHovered, startButtonX, buttonY, "");
-        drawButton(g2d, exitButtonImage, exitButtonHoverImage, exitHovered, exitButtonX, buttonY, "");
+        // Buttons are now JButtons, drawn by the panel
     }
     
-    private void drawButton(Graphics2D g2d, Image normalImage, Image hoverImage, boolean hovered, int x, int y, String text) {
-        Image buttonImage = hovered ? hoverImage : normalImage;
-        
-        if (buttonImage != null) {
-            g2d.drawImage(buttonImage, x, y, 200, 80, this);
-        } else {
-            // Fallback button drawing
-            g2d.setColor(hovered ? new Color(100, 150, 255) : new Color(50, 100, 200));
-            g2d.fillRoundRect(x, y, 200, 80, 10, 10);
-            g2d.setColor(Color.WHITE);
-            g2d.setStroke(new BasicStroke(2));
-            g2d.drawRoundRect(x, y, 200, 80, 10, 10);
-        }
-        
-        // Draw button text
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 18));
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = x + (200 - fm.stringWidth(text)) / 2;
-        int textY = y + 50;
-        g2d.drawString(text, textX, textY);
-    }
-    
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-        
-        // Calculate button positions dynamically
-        int buttonY = 650;
-        int startButtonX = (getWidth() - 200) / 2 - 120;
-        int exitButtonX = (getWidth() - 200) / 2 + 120;
-        
-        // Check if click is on Start Game button
-        if (x >= startButtonX && x <= startButtonX + 200 && y >= buttonY && y <= buttonY + 80) {
-            startGame();
-        }
-        // Check if click is on Exit button
-        else if (x >= exitButtonX && x <= exitButtonX + 200 && y >= buttonY && y <= buttonY + 80) {
-            exitGame();
-        }
-    }
-    
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-        
-        boolean wasStartHovered = startHovered;
-        boolean wasExitHovered = exitHovered;
-        
-        // Calculate button positions dynamically
-        int buttonY = 650;
-        int startButtonX = (getWidth() - 200) / 2 - 120;
-        int exitButtonX = (getWidth() - 200) / 2 + 120;
-        
-        startHovered = (x >= startButtonX && x <= startButtonX + 200 && y >= buttonY && y <= buttonY + 80);
-        exitHovered = (x >= exitButtonX && x <= exitButtonX + 200 && y >= buttonY && y <= buttonY + 80);
-        
-        if (startHovered != wasStartHovered || exitHovered != wasExitHovered) {
-            repaint();
-        }
-    }
-    
-    @Override
-    public void mousePressed(MouseEvent e) {}
-    
-    @Override
-    public void mouseReleased(MouseEvent e) {}
-    
-    @Override
-    public void mouseEntered(MouseEvent e) {}
-    
-    @Override
-    public void mouseExited(MouseEvent e) {}
-    
-    @Override
-    public void mouseDragged(MouseEvent e) {}
+
     
     private void startGame() {
         // Show StartGamePanel transition
@@ -201,6 +154,11 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         
         // Request focus for keyboard input
         gamePanel.requestFocusInWindow();
+    }
+    
+    private void showRankings() {
+        // TODO: Implement rankings/leaderboard functionality
+        JOptionPane.showMessageDialog(this, "Rankings feature coming soon!", "Rankings", JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void exitGame() {
