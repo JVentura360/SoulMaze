@@ -38,16 +38,16 @@ public class MainMenu extends JPanel {
     private void setupButtons() {
         // Load and scale Start/Play button
         ImageIcon originalStartIcon = new ImageIcon("src/assets/Images/StartButton.png");
-        Image scaledStartImage = originalStartIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        Image scaledStartImage = originalStartIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
         ImageIcon scaledStartIcon = new ImageIcon(scaledStartImage);
         
         ImageIcon hoverStartIcon = new ImageIcon("src/assets/Images/StartButtonHover.png");
         System.out.println("Start hover icon loaded: " + (hoverStartIcon.getImage() != null));
-        Image hoverStartScaled = hoverStartIcon.getImage().getScaledInstance(125, 125, Image.SCALE_SMOOTH);
+        Image hoverStartScaled = hoverStartIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
         ImageIcon scaledHoverStartIcon = new ImageIcon(hoverStartScaled);
         
         playButton = new JButton(scaledStartIcon);
-        playButton.setBounds(410, 650, 125, 125);
+        playButton.setBounds(580, 645, 150, 150);
         playButton.setRolloverIcon(scaledHoverStartIcon);
         playButton.setBorderPainted(false);
         playButton.setContentAreaFilled(false);
@@ -67,7 +67,7 @@ public class MainMenu extends JPanel {
         ImageIcon scaledHoverRankIcon = new ImageIcon(hoverRankScaled);
         
         rankButton = new JButton(scaledRankIcon);
-        rankButton.setBounds(580, 650, 125, 125);
+        rankButton.setBounds(410, 653, 125, 125);
         rankButton.setRolloverIcon(scaledHoverRankIcon);
         rankButton.setBorderPainted(false);
         rankButton.setContentAreaFilled(false);
@@ -87,7 +87,7 @@ public class MainMenu extends JPanel {
         ImageIcon scaledHoverExitIcon = new ImageIcon(hoverExitScaled);
         
         exitButton = new JButton(scaledExitIcon);
-        exitButton.setBounds(760, 650, 125, 125);
+        exitButton.setBounds(760, 653, 125, 125);
         exitButton.setRolloverIcon(scaledHoverExitIcon);
         exitButton.setBorderPainted(false);
         exitButton.setContentAreaFilled(false);
@@ -128,8 +128,23 @@ public class MainMenu extends JPanel {
     
     private void startGame() {
     	audioManager.fadeOutBackgroundMusic(2000); // Stop menu BGM before starting game
-        // Show StartGamePanel transition
-        showStartGameTransition();
+        // Show name input dialog first
+        showNameInputDialog();
+    }
+    
+    private void showNameInputDialog() {
+        NameInputDialog nameDialog = new NameInputDialog(parentFrame);
+        nameDialog.setVisible(true);
+        
+        if (nameDialog.isConfirmed()) {
+            String playerName = nameDialog.getPlayerName();
+            System.out.println("Player name: " + playerName);
+            // Show StartGamePanel transition
+            showStartGameTransition();
+        } else {
+            // User cancelled, fade back in the background music
+            audioManager.fadeInBackgroundMusic(1000, true);
+        }
     }
     
     private void showStartGameTransition() {
@@ -162,8 +177,8 @@ public class MainMenu extends JPanel {
     }
     
     private void showRankings() {
-        // TODO: Implement rankings/leaderboard functionality
-        JOptionPane.showMessageDialog(this, "Rankings feature coming soon!", "Rankings", JOptionPane.INFORMATION_MESSAGE);
+        RankingPanel rankingPanel = new RankingPanel(parentFrame);
+        rankingPanel.setVisible(true);
     }
     
     private void exitGame() {
