@@ -329,4 +329,16 @@ public class Ghost {
 
         return new Grave(x, y, color);
     }
+    
+    public double distanceTo(Player player) {
+        double ghostCenterX = (double)x + size / 2.0;
+        double ghostCenterY = (double)y + size / 2.0;
+        double playerCenterX = (double)player.x + player.size / 2.0;
+        double playerCenterY = (double)player.y + player.size / 2.0;
+
+        double dx = ghostCenterX - playerCenterX;
+        double dy = ghostCenterY - playerCenterY;
+        return Math.hypot(dx, dy);
+    }
+    
 }
