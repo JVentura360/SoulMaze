@@ -243,7 +243,10 @@ public class Ghost {
     public boolean collidesWith(Player p) {
         Rectangle ghostRect = new Rectangle(x, y, size, size);
         Rectangle playerRect = new Rectangle(p.x, p.y, p.size, p.size);
-        return ghostRect.intersects(playerRect);
+
+        Rectangle intersection = ghostRect.intersection(playerRect);
+        // Check if intersection exists and is at least 30px in width or height
+        return !intersection.isEmpty() && (intersection.width >= 30 && intersection.height >= 30);
     }
 
     public void draw(Graphics g) {

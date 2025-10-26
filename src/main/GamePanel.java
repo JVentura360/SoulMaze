@@ -27,7 +27,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private Image fogImage = new ImageIcon("src/assets/Images/fog.png").getImage();
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
-
+    private AudioManager audioManager;
 
     // === Constructor ===
     public GamePanel() {
@@ -42,7 +42,10 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
 
         // Use provided level manager or create new one
         this.levelManager = levelManager;
-        
+        // Initialize AudioManager
+        audioManager = new AudioManager();
+        audioManager.loadBackgroundMusic("src/assets/Music/GameplayBGM.wav");
+        audioManager.playBackgroundMusic(true); // loop the BGM
         // Initialize core game objects
         initializeLevel();
         
@@ -137,13 +140,20 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         fogRadius += (targetRadius - fogRadius) * 0.1;
         player.update();
 
-        // --- Ghost updates & collision ---
+     // --- Ghost updates & collision ---
         for (Ghost ghost : ghosts) {
             ghost.update(player);
 
-            // Collision check using Ghost method
             if (ghost.collidesWith(player)) {
-                handleGameOver();
+                if (player.canBeHit()) {
+                    player.collideWithGhost(); // triggers bleeding or death
+                    if (player.isDead()) {
+                        handleGameOver();
+                    } else if (player.isBleeding()) {
+                        System.out.println("Player hit! Speed reduced to " + player.speed);
+                    }
+                }
+                // else: still immune, ignore collision
             }
         }
 
@@ -156,6 +166,9 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private void handleGameOver() {
         gameOver = true;
         running = false; // stop the loop if you want
+        if (audioManager != null) {
+            audioManager.fadeOutBackgroundMusic(2000); // fade out over 2 seconds
+        }
     }
     
     private void handleLevelCompletion() {
@@ -380,6 +393,14 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
 
         // Draw the fog layer over the main scene
         g.drawImage(fogLayer, 0, 0, null);
+        
+     // --- Overlay bleeding effect ---
+        if (player.isBleeding()) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setColor(new Color(255, 0, 0, 80)); // Red with alpha 80 (out of 255)
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            g2d.dispose();
+        }
     }
     
     // === Reset Game (optional, for restart) ===

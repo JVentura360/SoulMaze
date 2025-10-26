@@ -100,4 +100,29 @@ public class AudioManager {
         }
         sfxMap.clear();
     }
+    
+    public void fadeOutBackgroundMusic(int durationMs) {
+        if (backgroundClip == null || bgVolumeControl == null || !backgroundClip.isRunning()) return;
+
+        new Thread(() -> {
+            try {
+                float startVolume = bgVolumeControl.getValue();
+                float minVolume = bgVolumeControl.getMinimum();
+                int steps = 50; // number of fade steps
+                long sleepTime = durationMs / steps;
+
+                for (int i = 0; i < steps; i++) {
+                    float volume = startVolume - (startVolume - minVolume) * ((float)i / steps);
+                    bgVolumeControl.setValue(volume);
+                    Thread.sleep(sleepTime);
+                }
+
+                // Ensure volume is minimum and stop playback
+                bgVolumeControl.setValue(minVolume);
+                backgroundClip.stop();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 }

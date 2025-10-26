@@ -127,7 +127,7 @@ public class MainMenu extends JPanel {
 
     
     private void startGame() {
-    	audioManager.stopBackgroundMusic(); // Stop menu BGM before starting game
+    	audioManager.fadeOutBackgroundMusic(2000); // Stop menu BGM before starting game
         // Show StartGamePanel transition
         showStartGameTransition();
     }

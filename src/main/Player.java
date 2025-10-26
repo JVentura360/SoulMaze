@@ -10,11 +10,17 @@ import java.awt.event.KeyEvent;
 public class Player {
 	public int x, y;
     public int speed = 4;
+    public int normalSpeed = 4;
+    public int slowSpeed = 2;
     public int size = 60;
     private Maze maze;
     private Soul heldSoul = null;
     boolean isHoldingSoul() { return heldSoul != null; }
     public Soul getHeldSoul() { return heldSoul; }
+ // === Bleeding state ===
+    private int hitCount = 0; // 0 = normal, 1 = bleeding, 2 = dead
+    private long bleedStartTime = 0;               // Time when bleeding started
+    private final int IMMUNE_DURATION = 5000;      // 5 seconds
     
     private static final int GAP = 2; // solid 2px gap between player and wall
 
@@ -36,15 +42,22 @@ public class Player {
         int nextX = x;
         int nextY = y;
 
-        // Horizontal movement
+        // movement logic
         if (left) nextX -= speed;
         if (right) nextX += speed;
         if (canMove(nextX, y)) x = nextX;
 
-        // Vertical movement
         if (up) nextY -= speed;
         if (down) nextY += speed;
         if (canMove(x, nextY)) y = nextY;
+
+        // restore speed if immunity expired
+        if (hitCount == 1) {
+            long now = System.currentTimeMillis();
+            if (now - bleedStartTime >= IMMUNE_DURATION) {
+                speed = normalSpeed;
+            }
+        }
     }
     
     public Rectangle getBounds() {
@@ -142,5 +155,46 @@ public class Player {
 
     public int getTileCol() {
         return (int) Math.floor((x + size / 2.0) / maze.tileSize);
+    }
+    
+    public void collideWithGhost() {
+        long now = System.currentTimeMillis();
+
+        if (hitCount == 0) {
+            // First collision → trigger bleeding
+            hitCount = 1;
+            speed = slowSpeed;
+            bleedStartTime = now;
+        } else if (hitCount == 1) {
+            // Second collision only counts if immunity expired
+            if (now - bleedStartTime >= IMMUNE_DURATION) {
+                hitCount = 2; // dead
+            }
+        }
+    }
+    public boolean isBleeding() {
+        return hitCount == 1;
+    }
+
+    public boolean isDead() {
+        return hitCount >= 2;
+    }
+    
+    public boolean canBeHit() {
+        if (hitCount == 0) return true; // first hit always counts
+        if (hitCount == 1) {
+            long now = System.currentTimeMillis();
+            return now - bleedStartTime >= IMMUNE_DURATION; // only count if immunity expired
+        }
+        return false; // dead already
+    }
+
+    // Optional: reset state (for restarting the game)
+    public void reset() {
+        speed = normalSpeed;
+        hitCount = 0;
+        x = 640;
+        y = 420;
+        stop();
     }
 }
