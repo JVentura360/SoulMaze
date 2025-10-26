@@ -133,7 +133,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
 
         int baseRadius = 150; // default clear radius
         if (player.isHoldingSoul()) {
-            // Holding a soul → fog clears more and pulses stronger
+            // Holding a soul ' fog clears more and pulses stronger
             int targetRadius = baseRadius + 60 + (int)(Math.sin(fogPulse) * 20);
             fogRadius += (targetRadius - fogRadius) * 0.1; // smooth transition
         } else {
@@ -349,7 +349,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
                     player.removeHeldSoul();
                     levelManager.addScore(50); // Points for correct match
                 } else {
-                    // Wrong grave — soul respawns elsewhere
+                    // Wrong grave ' soul respawns elsewhere
                     player.removeHeldSoul();
                     Soul.respawn(held, maze);
                     souls.add(held);
@@ -384,7 +384,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         g2.setComposite(AlphaComposite.SrcOver);
         g2.drawImage(fogImage, 0, 0, w, h, null);
 
-     // === Smooth circular reveal around player (center clear → edge dark) ===
+     // === Smooth circular reveal around player (center clear ' edge dark) ===
         int px = player.x + player.size / 2;
         int py = player.y + player.size / 2;
         int radius = fogRadius;
@@ -395,13 +395,13 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
             radius,
             new float[]{0.1f, 0.8f, 1.0f},
             new Color[]{
-                new Color(0f, 0f, 0f, 1f),   // 0.0 — fully opaque black (we’ll "erase" this later)
+                new Color(0f, 0f, 0f, 1f),   // 0.0 ' fully opaque black (we'll "erase" this later)
                 new Color(0f, 0f, 0f, 0.1f), // middle fade
-                new Color(0f, 0f, 0f, 0f)    // 1.0 — transparent outer edge
+                new Color(0f, 0f, 0f, 0f)    // 1.0 ' transparent outer edge
             }
         );
 
-        // Use this gradient as the “erase” mask
+        // Use this gradient as the 'erase' mask
         g2.setPaint(gradient);
         g2.setComposite(AlphaComposite.DstOut);
         g2.fillOval(px - radius, py - radius, radius * 2, radius * 2);

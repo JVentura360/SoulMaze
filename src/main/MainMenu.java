@@ -4,9 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.ByteArrayInputStream;
-import javax.sound.sampled.*;
 
 public class MainMenu extends JPanel implements MouseListener, MouseMotionListener {
     private JFrame parentFrame;
@@ -19,8 +16,6 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
     private boolean startHovered = false;
     private boolean exitHovered = false;
     
-    private Clip backgroundMusic;
-    
     public MainMenu(JFrame parent) {
         this.parentFrame = parent;
         setPreferredSize(new Dimension(1280, 800));
@@ -29,7 +24,6 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         addMouseMotionListener(this);
         
         loadImages();
-        loadBackgroundMusic();
     }
     
     private void loadImages() {
@@ -63,63 +57,7 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
         return buffered;
     }
     
-    private void loadBackgroundMusic() {
-        try {
-            File musicFile = new File("src/assets/Music/MainMenu.wav");
-            if (!musicFile.exists()) {
-                musicFile = new File("src/assets/Music/MainMenu.mp3");
-            }
-            
-            if (musicFile.exists()) {
-                AudioInputStream fullStream = AudioSystem.getAudioInputStream(musicFile);
-                AudioFormat format = fullStream.getFormat();
-                
-                // Calculate bytes for 0:15 to 0:38 (23 seconds)
-                int frameSize = format.getFrameSize();
-                long startFrame = (long) (15.0 * format.getFrameRate());
-                long endFrame = (long) (38.0 * format.getFrameRate());
-                long frameLength = endFrame - startFrame;
-                long byteLength = frameLength * frameSize;
-                
-                System.out.println("Audio format: " + format);
-                System.out.println("Frame rate: " + format.getFrameRate());
-                System.out.println("Start frame: " + startFrame + ", End frame: " + endFrame);
-                System.out.println("Frame length: " + frameLength);
-                
-                // Read the specific segment into a byte array
-                byte[] audioData = new byte[(int) byteLength];
-                long bytesSkipped = fullStream.skip(startFrame * frameSize);
-                System.out.println("Bytes skipped: " + bytesSkipped);
-                
-                int bytesRead = fullStream.read(audioData, 0, (int) byteLength);
-                System.out.println("Bytes read: " + bytesRead);
-                
-                if (bytesRead > 0) {
-                    // Create new stream from the extracted data
-                    ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
-                    AudioInputStream segmentStream = new AudioInputStream(bais, format, frameLength);
-                    
-                    backgroundMusic = AudioSystem.getClip();
-                    backgroundMusic.open(segmentStream);
-                    backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
-                    System.out.println("Background music loaded successfully (0:15-0:38 loop)");
-                } else {
-                    System.out.println("Failed to read audio segment, playing full track");
-                    // Fallback to full track
-                    AudioInputStream fallbackStream = AudioSystem.getAudioInputStream(musicFile);
-                    backgroundMusic = AudioSystem.getClip();
-                    backgroundMusic.open(fallbackStream);
-                    backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
-                }
-            } else {
-                System.out.println("No music file found at src/assets/Music/");
-            }
-        } catch (Exception e) {
-            System.err.println("Error loading background music: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -232,11 +170,6 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
     public void mouseDragged(MouseEvent e) {}
     
     private void startGame() {
-        // Stop background music
-        if (backgroundMusic != null && backgroundMusic.isRunning()) {
-            backgroundMusic.stop();
-        }
-        
         // Show StartGamePanel transition
         showStartGameTransition();
     }
@@ -271,11 +204,6 @@ public class MainMenu extends JPanel implements MouseListener, MouseMotionListen
     }
     
     private void exitGame() {
-        // Stop background music
-        if (backgroundMusic != null && backgroundMusic.isRunning()) {
-            backgroundMusic.stop();
-        }
-        
         System.exit(0);
     }
 }
