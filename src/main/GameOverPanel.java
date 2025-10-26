@@ -11,31 +11,38 @@ public class GameOverPanel extends JPanel {
 
     private final GameOverListener listener;
     private final Image backgroundImage;
-
-    // keep references so we can position them dynamically
-    private final JLabel title;
     private final JButton retryButton;
     private final JButton quitButton;
 
     public GameOverPanel(GameOverListener listener) {
         this.listener = listener;
         setLayout(null);
-        setOpaque(false); // We are drawing a background image, so the panel itself should be transparent
+        setOpaque(false); // Transparent overlay
 
         // Load the background image
         backgroundImage = new ImageIcon("src/assets/Images/GameOverPanel.png").getImage();
 
-        title = new JLabel("GAME OVER", SwingConstants.CENTER);
-        title.setFont(new Font("Serif", Font.BOLD, 80));
-        title.setForeground(Color.RED);
-        add(title);
+        // -----------------------------
+        // RETRY button (image version)
+        // -----------------------------
+        ImageIcon retryIcon = new ImageIcon("src/assets/Images/OverRetryButton.png");
+        Image scaledRetry = retryIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledRetryIcon = new ImageIcon(scaledRetry);
 
-        retryButton = new JButton("RETRY");
+        ImageIcon retryHoverIcon = new ImageIcon("src/assets/Images/OverRetryButtonHover.png");
+        Image scaledRetryHover = retryHoverIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledRetryHoverIcon = new ImageIcon(scaledRetryHover);
+
+        retryButton = new JButton(scaledRetryIcon);
+        retryButton.setRolloverIcon(scaledRetryHoverIcon);
+        retryButton.setBorderPainted(false);
+        retryButton.setContentAreaFilled(false);
+        retryButton.setFocusPainted(false);
+        retryButton.setOpaque(false);
+        retryButton.setBounds(380, 540, 150, 150); // Adjust position as needed
         retryButton.addActionListener(e -> {
-            // Get the top-level frame
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
             if (frame != null) {
-                // Get the glass pane, hide it, and remove our overlay
                 JPanel glassPane = (JPanel) frame.getGlassPane();
                 glassPane.setVisible(false);
                 glassPane.removeAll();
@@ -44,12 +51,27 @@ public class GameOverPanel extends JPanel {
         });
         add(retryButton);
 
-        quitButton = new JButton("QUIT");
+        // -----------------------------
+        // QUIT button (image version)
+        // -----------------------------
+        ImageIcon quitIcon = new ImageIcon("src/assets/Images/OverQuitButton.png");
+        Image scaledQuit = quitIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledQuitIcon = new ImageIcon(scaledQuit);
+
+        ImageIcon quitHoverIcon = new ImageIcon("src/assets/Images/OverQuitButtonHover.png");
+        Image scaledQuitHover = quitHoverIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledQuitHoverIcon = new ImageIcon(scaledQuitHover);
+
+        quitButton = new JButton(scaledQuitIcon);
+        quitButton.setRolloverIcon(scaledQuitHoverIcon);
+        quitButton.setBorderPainted(false);
+        quitButton.setContentAreaFilled(false);
+        quitButton.setFocusPainted(false);
+        quitButton.setOpaque(false);
+        quitButton.setBounds(670, 540, 150, 150); // Adjust position as needed
         quitButton.addActionListener(e -> {
-            // Get the top-level frame
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
             if (frame != null) {
-                // Get the glass pane, hide it, and remove our overlay
                 JPanel glassPane = (JPanel) frame.getGlassPane();
                 glassPane.setVisible(false);
                 glassPane.removeAll();
@@ -59,36 +81,16 @@ public class GameOverPanel extends JPanel {
         add(quitButton);
     }
 
-    // layout components relative to current size so they remain visible on all resolutions
-    @Override
-    public void doLayout() {
-        int w = getWidth();
-        int h = getHeight();
-        int titleW = Math.min(800, (int)(w * 0.7));
-        int titleH = Math.min(120, (int)(h * 0.15));
-        title.setBounds((w - titleW) / 2, Math.max(20, h / 6 - titleH / 2), titleW, titleH);
-
-        int btnW = Math.min(160, (int)(w * 0.12));
-        int btnH = Math.min(60, (int)(h * 0.08));
-        int gap = 20;
-        int totalW = btnW * 2 + gap;
-        int startX = (w - totalW) / 2;
-        int y = Math.min(h - btnH - 40, h / 2);
-
-        retryButton.setBounds(startX, y, btnW, btnH);
-        quitButton.setBounds(startX + btnW + gap, y, btnW, btnH);
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // Draw a semi-transparent background
+
+        // Dark semi-transparent overlay
         g.setColor(new Color(0, 0, 0, 180));
         g.fillRect(0, 0, getWidth(), getHeight());
 
-        // Draw the background image on top
+        // Draw centered background image
         if (backgroundImage != null) {
-            // Center the image
             int imgWidth = backgroundImage.getWidth(this);
             int imgHeight = backgroundImage.getHeight(this);
             int x = (getWidth() - imgWidth) / 2;
