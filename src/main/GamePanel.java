@@ -44,8 +44,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         this.levelManager = levelManager;
         // Initialize AudioManager
         audioManager = new AudioManager();
-        audioManager.loadBackgroundMusic("src/assets/Music/GameplayBGM.wav");
-        audioManager.playBackgroundMusic(true); // loop the BGM
+        audioManager.loadBackgroundMusic("src/assets/Music/Gameplay.wav");
+        audioManager.fadeInBackgroundMusic(2000, true); // loop the BGM
         // Initialize core game objects
         initializeLevel();
         

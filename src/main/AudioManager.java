@@ -125,4 +125,40 @@ public class AudioManager {
             }
         }).start();
     }
+    
+    public void fadeInBackgroundMusic(int durationMs, boolean loop) {
+        if (backgroundClip == null || bgVolumeControl == null) return;
+
+        new Thread(() -> {
+            try {
+                float minVolume = bgVolumeControl.getMinimum();
+                float maxVolume = 0f; // typical "normal" dB volume
+                int steps = 50; // number of steps in the fade
+                long sleepTime = durationMs / steps;
+
+                // Start from minimum volume
+                bgVolumeControl.setValue(minVolume);
+                backgroundClip.stop();
+                backgroundClip.setFramePosition(0);
+
+                if (loop) {
+                    backgroundClip.loop(Clip.LOOP_CONTINUOUSLY);
+                } else {
+                    backgroundClip.start();
+                }
+
+                for (int i = 0; i <= steps; i++) {
+                    float volume = minVolume + (maxVolume - minVolume) * ((float)i / steps);
+                    bgVolumeControl.setValue(volume);
+                    Thread.sleep(sleepTime);
+                }
+
+                // Ensure final volume is max
+                bgVolumeControl.setValue(maxVolume);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 }
