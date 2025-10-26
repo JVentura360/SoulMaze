@@ -1,4 +1,4 @@
-package main;
+﻿package main;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,13 +28,18 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
     private AudioManager audioManager;
+    private String playerName = "Player"; // Default player name
 
     // === Constructor ===
     public GamePanel() {
-        this(new LevelManager());
+        this(new LevelManager(), "Player");
     }
     
     public GamePanel(LevelManager levelManager) {
+        this(levelManager, "Player");
+    }
+    
+    public GamePanel(LevelManager levelManager, String playerName) {
         setPreferredSize(new Dimension(1200, 780));
         setBackground(Color.black);
         setFocusable(true);
@@ -42,6 +47,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
 
         // Use provided level manager or create new one
         this.levelManager = levelManager;
+        this.playerName = playerName;
         // Initialize AudioManager
         audioManager = new AudioManager();
         audioManager.loadBackgroundMusic("src/assets/Music/Gameplay.wav");
@@ -166,6 +172,12 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private void handleGameOver() {
         gameOver = true;
         running = false; // stop the loop if you want
+        
+        // Save the player's score
+        int finalScore = levelManager.getScore();
+        ScoreManager.saveScore(playerName, finalScore);
+        System.out.println("Game Over! Final score for " + playerName + ": " + finalScore);
+        
         if (audioManager != null) {
             audioManager.fadeOutBackgroundMusic(2000); // fade out over 2 seconds
         }

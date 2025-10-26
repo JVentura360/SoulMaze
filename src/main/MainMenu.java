@@ -11,6 +11,7 @@ public class MainMenu extends JPanel {
     private JButton playButton;
     private JButton rankButton;
     private JButton exitButton;
+    private String playerName = "Player"; // Store player name
  // AudioManager instance
     private AudioManager audioManager;
     public MainMenu(JFrame parent) {
@@ -139,7 +140,8 @@ public class MainMenu extends JPanel {
         if (nameDialog.isConfirmed()) {
             String playerName = nameDialog.getPlayerName();
             System.out.println("Player name: " + playerName);
-            // Show StartGamePanel transition
+            // Store player name and show StartGamePanel transition
+            this.playerName = playerName;
             showStartGameTransition();
         } else {
             // User cancelled, fade back in the background music
@@ -166,7 +168,7 @@ public class MainMenu extends JPanel {
     private void startActualGame() {
         // Switch to game panel
         parentFrame.getContentPane().removeAll();
-        GamePanel gamePanel = new GamePanel();
+        GamePanel gamePanel = new GamePanel(new LevelManager(), playerName);
         parentFrame.add(gamePanel);
         parentFrame.pack();
         parentFrame.revalidate();

@@ -62,16 +62,21 @@ public class RankingPanel extends JDialog {
     }
     
     private void loadScores() {
+        // Load scores from file using ScoreManager
+        List<ScoreManager.PlayerScore> fileScores = ScoreManager.getTopScores(10); // Get top 10 for display
         scores = new ArrayList<>();
-        // For now, add some sample scores. In a real implementation, you'd load from a file
-        scores.add(new PlayerScore("Player1", 1500));
-        scores.add(new PlayerScore("Player2", 1200));
-        scores.add(new PlayerScore("Player3", 1000));
-        scores.add(new PlayerScore("Player4", 800));
-        scores.add(new PlayerScore("Player5", 600));
         
-        // Sort by score (highest first)
-        scores.sort((a, b) -> Integer.compare(b.score, a.score));
+        // Convert to local PlayerScore objects
+        for (ScoreManager.PlayerScore fileScore : fileScores) {
+            scores.add(new PlayerScore(fileScore.name, fileScore.score));
+        }
+        
+        // If no scores exist, add some sample data
+        if (scores.isEmpty()) {
+            scores.add(new PlayerScore("No scores yet", 0));
+        }
+        
+        System.out.println("Loaded " + scores.size() + " scores from file");
     }
     
     private void setupDialog() {

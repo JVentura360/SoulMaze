@@ -94,9 +94,9 @@ public class NameInputDialog extends JDialog {
         
         // Create name input field
         nameField = new JTextField();
-        nameField.setFont(customFont.deriveFont(18f));
+        nameField.setFont(customFont.deriveFont(24f)); // Increased from 18f to 24f
         nameField.setHorizontalAlignment(SwingConstants.CENTER);
-        nameField.setBounds(150, 150, 300, 40);
+        nameField.setBounds(150, 150, 300, 50); // Increased height from 40 to 50
         nameField.setOpaque(false);
         nameField.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
         nameField.setForeground(Color.WHITE);
