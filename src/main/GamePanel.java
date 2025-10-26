@@ -1,4 +1,4 @@
-package main;
+﻿package main;
 
 import javax.swing.*;
 import java.awt.*;
@@ -193,6 +193,31 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         }
         audioManager.stopSFX("heartbeatNormal");
 
+        // Show custom Game Over Panel
+        JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        GameOverPanel.GameOverListener listener = new GameOverPanel.GameOverListener() {
+            public void onRetry() {
+                // Restart game with same LevelManager and playerName
+                parentFrame.getContentPane().removeAll();
+                GamePanel retryPanel = new GamePanel(levelManager, playerName);
+                parentFrame.add(retryPanel);
+                parentFrame.pack();
+                parentFrame.revalidate();
+                parentFrame.repaint();
+                retryPanel.requestFocusInWindow();
+            }
+            public void onQuit() {
+                // Return to MainMenu
+                parentFrame.getContentPane().removeAll();
+                MainMenu menuPanel = new MainMenu(parentFrame);
+                parentFrame.add(menuPanel);
+                parentFrame.pack();
+                parentFrame.revalidate();
+                parentFrame.repaint();
+            }
+        };
+        GameOverPanel panel = new GameOverPanel(parentFrame, listener);
+        panel.setVisible(true);
     }
     
     private void handleLevelCompletion() {
