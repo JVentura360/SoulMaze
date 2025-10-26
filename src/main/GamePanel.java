@@ -28,7 +28,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
     private AudioManager audioManager;
-
+    private boolean heartbeatBleeding = false;
+    
     // === Constructor ===
     public GamePanel() {
         this(new LevelManager());
@@ -42,12 +43,25 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
 
         // Use provided level manager or create new one
         this.levelManager = levelManager;
-        // Initialize AudioManager
+        // --- Audio setup ---
         audioManager = new AudioManager();
+
+        // Load BGM
         audioManager.loadBackgroundMusic("src/assets/Music/Gameplay.wav");
-        audioManager.fadeInBackgroundMusic(2000, true); // loop the BGM
+        audioManager.fadeInBackgroundMusic(2000, true); // loop gameplay BGM
+
+        // Load heartbeats
+        audioManager.loadSFX("heartbeatNormal", "src/assets/Music/HeartbeatNormal.wav");
+        audioManager.loadSFX("heartbeatFast", "src/assets/Music/HeartbeatFast.wav");
+
+        // Play normal heartbeat immediately
+        heartbeatBleeding = false; // ensure state is consistent
+        audioManager.playSFX("heartbeatNormal", true); // looped
+        
         // Initialize core game objects
         initializeLevel();
+        
+
         
         // Start main game loop
         gameThread = new Thread(this);
@@ -156,7 +170,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
                 // else: still immune, ignore collision
             }
         }
-
+        
+        updateHeartbeat();
         // --- Check level completion ---
         if (levelManager.isLevelCompleted(graves)) {
             handleLevelCompletion();
@@ -169,6 +184,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         if (audioManager != null) {
             audioManager.fadeOutBackgroundMusic(2000); // fade out over 2 seconds
         }
+        audioManager.stopSFX("heartbeatNormal");
+
     }
     
     private void handleLevelCompletion() {
@@ -184,9 +201,11 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
             // Show level up transition when advancing to levels 2-18
             if (levelManager.getCurrentLevel() == 1) {
                 // We're completing level 1, so show transition before going to level 2
+ 
                 showLevelUpTransition();
             } else {
                 // For other levels, show transition
+ 
                 showLevelUpTransition();
             }
         }
@@ -400,6 +419,28 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
             g2d.setColor(new Color(255, 0, 0, 80)); // Red with alpha 80 (out of 255)
             g2d.fillRect(0, 0, getWidth(), getHeight());
             g2d.dispose();
+        }
+    }
+    
+    private void updateHeartbeat() {
+        boolean shouldBeBleeding = player.isBleeding();
+
+        if (shouldBeBleeding != heartbeatBleeding) {
+            // State changed: switch heartbeat
+            heartbeatBleeding = shouldBeBleeding;
+
+            // Stop both heartbeats first
+            audioManager.stopSFX("heartbeatNormal");
+            audioManager.stopSFX("heartbeatFast");
+
+            // Play correct heartbeat loop
+            if (heartbeatBleeding) {
+                audioManager.playSFX("heartbeatFast", true);
+            } else {
+                audioManager.playSFX("heartbeatNormal", true);
+            }
+
+            System.out.println("Switched heartbeat to " + (heartbeatBleeding ? "Fast" : "Normal"));
         }
     }
     

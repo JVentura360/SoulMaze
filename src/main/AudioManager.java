@@ -67,12 +67,13 @@ public class AudioManager {
     }
 
     // === Play a sound effect (one-shot) ===
-    public void playSFX(String name) {
+    public void playSFX(String name, boolean loop) {
         Clip clip = sfxMap.get(name);
         if (clip == null) return;
         if (clip.isRunning()) clip.stop();
         clip.setFramePosition(0);
-        clip.start();
+        if (loop) clip.loop(Clip.LOOP_CONTINUOUSLY);
+        else clip.start();
     }
 
     // === Stop a sound effect ===
@@ -87,6 +88,13 @@ public class AudioManager {
     public boolean isSFXPlaying(String name) {
         Clip clip = sfxMap.get(name);
         return clip != null && clip.isRunning();
+    }
+    
+ // Return duration of sound in milliseconds
+    public long getSFXDuration(String name) {
+        Clip clip = sfxMap.get(name);
+        if (clip == null) return 0;
+        return (long)((clip.getMicrosecondLength()) / 1000.0);
     }
 
     // === Cleanup all audio resources ===
@@ -161,4 +169,6 @@ public class AudioManager {
             }
         }).start();
     }
+    
+    
 }
