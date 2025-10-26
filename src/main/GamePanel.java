@@ -1,4 +1,4 @@
-package main;
+﻿package main;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +27,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private Image fogImage = new ImageIcon("src/assets/Images/fog.png").getImage();
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
-    private AudioManager audioManager = new AudioManager("src/assets/Music/Heartbeat.wav");
+    private final AudioManager audioManager = SoundSystem.getHeartbeat();
+
     // === Constructor ===
     public GamePanel() {
         this(new LevelManager());
