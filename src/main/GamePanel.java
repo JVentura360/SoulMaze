@@ -1,4 +1,4 @@
-﻿package main;
+package main;
 
 import javax.swing.*;
 import java.awt.*;
@@ -216,38 +216,31 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
                 parentFrame.repaint();
             }
         };
-        SwingUtilities.invokeLater(() -> {
-            JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            JLayeredPane layeredPane = parentFrame.getLayeredPane();
-        
-            GameOverPanel overlay = new GameOverPanel(new GameOverPanel.GameOverListener() {
-                public void onRetry() {
-                    parentFrame.getContentPane().removeAll();
-                    GamePanel retryPanel = new GamePanel(levelManager, playerName);
-                    parentFrame.add(retryPanel);
-                    parentFrame.pack();
-                    parentFrame.revalidate();
-                    parentFrame.repaint();
-                    retryPanel.requestFocusInWindow();
-                }
-        
-                public void onQuit() {
-                    parentFrame.getContentPane().removeAll();
-                    MainMenu menuPanel = new MainMenu(parentFrame);
-                    parentFrame.add(menuPanel);
-                    parentFrame.pack();
-                    parentFrame.revalidate();
-                    parentFrame.repaint();
-                }
-            });
-        
-            overlay.setBounds(0, 0, 1024, 805);
-            layeredPane.add(overlay, JLayeredPane.POPUP_LAYER);
-            layeredPane.moveToFront(overlay);
-            layeredPane.revalidate();
-            layeredPane.repaint();
-        });
-        
+        // ...existing code...
+SwingUtilities.invokeLater(() -> {
+    JFrame parentFrame1 = (JFrame) SwingUtilities.getWindowAncestor(this);
+    if (parentFrame == null) {
+        System.out.println("handleGameOver: parentFrame is null");
+        return;
+    }
+
+    // Create the overlay panel
+    GameOverPanel overlay = new GameOverPanel(listener);
+
+    // Get the glass pane and set its layout
+    JPanel glassPane = (JPanel) parentFrame1.getGlassPane();
+    glassPane.setLayout(new GridLayout(1, 1));
+    glassPane.removeAll(); // Clear previous components
+    glassPane.add(overlay);
+
+    // Make the glass pane visible
+    glassPane.setVisible(true);
+
+    // Revalidate and repaint to show the overlay
+    parentFrame1.revalidate();
+    parentFrame1.repaint();
+});
+
         
     }
     
