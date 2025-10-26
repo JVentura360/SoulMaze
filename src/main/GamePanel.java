@@ -216,8 +216,39 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
                 parentFrame.repaint();
             }
         };
-        GameOverPanel panel = new GameOverPanel(parentFrame, listener);
-        panel.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            JLayeredPane layeredPane = parentFrame.getLayeredPane();
+        
+            GameOverPanel overlay = new GameOverPanel(new GameOverPanel.GameOverListener() {
+                public void onRetry() {
+                    parentFrame.getContentPane().removeAll();
+                    GamePanel retryPanel = new GamePanel(levelManager, playerName);
+                    parentFrame.add(retryPanel);
+                    parentFrame.pack();
+                    parentFrame.revalidate();
+                    parentFrame.repaint();
+                    retryPanel.requestFocusInWindow();
+                }
+        
+                public void onQuit() {
+                    parentFrame.getContentPane().removeAll();
+                    MainMenu menuPanel = new MainMenu(parentFrame);
+                    parentFrame.add(menuPanel);
+                    parentFrame.pack();
+                    parentFrame.revalidate();
+                    parentFrame.repaint();
+                }
+            });
+        
+            overlay.setBounds(0, 0, 1024, 805);
+            layeredPane.add(overlay, JLayeredPane.POPUP_LAYER);
+            layeredPane.moveToFront(overlay);
+            layeredPane.revalidate();
+            layeredPane.repaint();
+        });
+        
+        
     }
     
     private void handleLevelCompletion() {
@@ -324,11 +355,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
             s.draw(g);
         }
         
-        if (levelCompleted) {
-            g.setColor(Color.GREEN);
-            g.setFont(new Font("Arial", Font.BOLD, 32));
-            g.drawString("LEVEL COMPLETED!", 400, 400);
-        }
+
     }
 
     // === Input Handling ===

@@ -1,67 +1,55 @@
-package main;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class GameOverPanel extends JDialog {
+public class GameOverPanel extends JPanel {
     public interface GameOverListener {
         void onRetry();
         void onQuit();
     }
 
-    public GameOverPanel(JFrame parent, GameOverListener callback) {
-        super(parent, "", true);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setUndecorated(true);
-        setSize(1024, 805);
-        setLocationRelativeTo(parent);
-        setBackground(new Color(0, 0, 0, 0));
+    private final GameOverListener listener;
+
+    public GameOverPanel(GameOverListener listener) {
+        this.listener = listener;
         setLayout(null);
+        setOpaque(false);
+        setBounds(0, 0, 1024, 805);
 
-        // Background
-        JPanel bgPanel = new JPanel() {
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Image img = new ImageIcon("src/assets/Images/GameOverPanel.png").getImage();
-                g.drawImage(img, 0, 0, getWidth(), getHeight(), null);
-            }
-        };
-        bgPanel.setLayout(null);
-        bgPanel.setBounds(0, 0, 1024, 805);
-        bgPanel.setOpaque(false);
-        add(bgPanel);
+        // Background (semi-transparent overlay)
+        setBackground(new Color(0, 0, 0, 150));
 
-        // Retry button
-        ImageIcon retryIcon = new ImageIcon("src/assets/Images/RetryButton.png");
-        ImageIcon retryHoverIcon = new ImageIcon("src/assets/Images/ReturnButtonHover.png");
-        JButton retryButton = new JButton(new ImageIcon(retryIcon.getImage().getScaledInstance(150, 80, Image.SCALE_SMOOTH)));
-        retryButton.setBounds(90, 340, 150, 80);
-        retryButton.setRolloverIcon(new ImageIcon(retryHoverIcon.getImage().getScaledInstance(150, 80, Image.SCALE_SMOOTH)));
-        retryButton.setBorderPainted(false);
-        retryButton.setContentAreaFilled(false);
-        retryButton.setFocusPainted(false);
-        retryButton.setOpaque(false);
+        JLabel title = new JLabel("GAME OVER", SwingConstants.CENTER);
+        title.setFont(new Font("Serif", Font.BOLD, 80));
+        title.setForeground(Color.RED);
+        title.setBounds(200, 200, 600, 100);
+        add(title);
+
+        JButton retryButton = new JButton("RETRY");
+        retryButton.setBounds(350, 350, 120, 50);
         retryButton.addActionListener(e -> {
-            dispose();
-            callback.onRetry();
+            Container parent = getParent();
+            if (parent != null) parent.remove(this);
+            if (listener != null) listener.onRetry();
         });
-        bgPanel.add(retryButton);
+        add(retryButton);
 
-        // Quit button
-        ImageIcon quitIcon = new ImageIcon("src/assets/Images/QuitButton.png");
-        ImageIcon quitHoverIcon = new ImageIcon("src/assets/Images/QuitButtonHover.png");
-        JButton quitButton = new JButton(new ImageIcon(quitIcon.getImage().getScaledInstance(150, 80, Image.SCALE_SMOOTH)));
-        quitButton.setBounds(360, 340, 150, 80);
-        quitButton.setRolloverIcon(new ImageIcon(quitHoverIcon.getImage().getScaledInstance(150, 80, Image.SCALE_SMOOTH)));
-        quitButton.setBorderPainted(false);
-        quitButton.setContentAreaFilled(false);
-        quitButton.setFocusPainted(false);
-        quitButton.setOpaque(false);
+        JButton quitButton = new JButton("QUIT");
+        quitButton.setBounds(550, 350, 120, 50);
         quitButton.addActionListener(e -> {
-            dispose();
-            callback.onQuit();
+            Container parent = getParent();
+            if (parent != null) parent.remove(this);
+            if (listener != null) listener.onQuit();
         });
-        bgPanel.add(quitButton);
+        add(quitButton);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        // Dark transparent overlay
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRect(0, 0, getWidth(), getHeight());
     }
 }
