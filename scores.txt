@@ -1,1 +1,2 @@
 Player:350
+Player:150

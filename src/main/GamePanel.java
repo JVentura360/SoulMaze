@@ -1,4 +1,4 @@
-﻿package main;
+package main;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,13 +28,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
     private AudioManager audioManager;
-<<<<<<< HEAD
     private String playerName = "Player"; // Default player name
-
-=======
     private boolean heartbeatBleeding = false;
-    
->>>>>>> 9a68165617f5eb655ab301ec99f4bf535f49170d
     // === Constructor ===
     public GamePanel() {
         this(new LevelManager(), "Player");
@@ -52,12 +47,8 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
 
         // Use provided level manager or create new one
         this.levelManager = levelManager;
-<<<<<<< HEAD
         this.playerName = playerName;
-        // Initialize AudioManager
-=======
         // --- Audio setup ---
->>>>>>> 9a68165617f5eb655ab301ec99f4bf535f49170d
         audioManager = new AudioManager();
 
         // Load BGM
