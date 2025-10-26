@@ -27,7 +27,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private Image fogImage = new ImageIcon("src/assets/Images/fog.png").getImage();
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
-    private final AudioManager audioManager = SoundSystem.getHeartbeat();
+
 
     // === Constructor ===
     public GamePanel() {
@@ -128,62 +128,26 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     // === Game Logic ===
     private void update() {
         if (gameOver || levelCompleted) return;
-        
-     // === Fog pulsing & soul effect ===
+
+        // --- Fog & player update ---
         fogPulse += 0.05;
-
-        int baseRadius = 150; // default clear radius
-        if (player.isHoldingSoul()) {
-            // Holding a soul ' fog clears more and pulses stronger
-            int targetRadius = baseRadius + 60 + (int)(Math.sin(fogPulse) * 20);
-            fogRadius += (targetRadius - fogRadius) * 0.1; // smooth transition
-        } else {
-            // Normal fog breathing
-            int targetRadius = baseRadius + (int)(Math.sin(fogPulse) * 10);
-            fogRadius += (targetRadius - fogRadius) * 0.1; // smooth transition
-        }
-        
-        // Update player
+        int baseRadius = 150;
+        int targetRadius = player.isHoldingSoul() ? baseRadius + 60 + (int)(Math.sin(fogPulse) * 20)
+                                                  : baseRadius + (int)(Math.sin(fogPulse) * 10);
+        fogRadius += (targetRadius - fogRadius) * 0.1;
         player.update();
-     // --- GHOST UPDATES ---
-        double totalWeight = 0;
-        double weightedDist = 0;
-        double weightedDx = 0;
 
+        // --- Ghost updates & collision ---
         for (Ghost ghost : ghosts) {
             ghost.update(player);
 
-            double dx = ghost.x - player.x;
-            double dy = ghost.y - player.y;
-            double dist = Math.sqrt(dx * dx + dy * dy);
-
-            // Skip if ghost too far (no effect)
-            if (dist > 800) continue;
-
-            // Weight closer ghosts more
-            double weight = 1.0 / Math.max(1, dist);
-            totalWeight += weight;
-            weightedDist += dist * weight;
-            weightedDx += dx * weight;
+            // Collision check using Ghost method
+            if (ghost.collidesWith(player)) {
+                handleGameOver();
+            }
         }
 
-        if (totalWeight > 0) {
-            double avgDist = weightedDist / totalWeight;
-            double avgDx = weightedDx / totalWeight;
-
-            // Normalize horizontal offset for panning (-1 to 1)
-            double direction = Math.max(-1, Math.min(1, avgDx / 400.0));
-
-            // Pass blended distance + direction to AudioManager
-            audioManager.adjustHeartbeat(avgDist, direction);
-        } else {
-            // No ghosts nearby
-            audioManager.adjustHeartbeat(999, 0);
-        }
-
-        audioManager.update(System.currentTimeMillis());
-        
-        // Check level completion
+        // --- Check level completion ---
         if (levelManager.isLevelCompleted(graves)) {
             handleLevelCompletion();
         }

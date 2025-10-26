@@ -11,13 +11,17 @@ public class MainMenu extends JPanel {
     private JButton playButton;
     private JButton rankButton;
     private JButton exitButton;
-    
+ // AudioManager instance
+    private AudioManager audioManager;
     public MainMenu(JFrame parent) {
         this.parentFrame = parent;
         setLayout(null);
         setPreferredSize(new Dimension(1280, 800));
         setBackground(Color.BLACK);
-        
+     // Initialize AudioManager and play BGM
+        audioManager = new AudioManager();
+        audioManager.loadBackgroundMusic("src/assets/Music/MainMenu.wav"); // <-- your BGM file
+        audioManager.playBackgroundMusic(true); // loop continuously
         loadImages();
         setupButtons();
     }
@@ -123,6 +127,7 @@ public class MainMenu extends JPanel {
 
     
     private void startGame() {
+    	audioManager.stopBackgroundMusic(); // Stop menu BGM before starting game
         // Show StartGamePanel transition
         showStartGameTransition();
     }
@@ -162,6 +167,7 @@ public class MainMenu extends JPanel {
     }
     
     private void exitGame() {
+    	audioManager.cleanup(); // release audio resources
         System.exit(0);
     }
 }
