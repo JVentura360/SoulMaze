@@ -128,8 +128,7 @@ public class MainMenu extends JPanel {
 
     
     private void startGame() {
-    	audioManager.fadeOutBackgroundMusic(2000); // Stop menu BGM before starting game
-        // Show name input dialog first
+        // Show name input dialog first (keep music playing)
         showNameInputDialog();
     }
     
@@ -140,12 +139,12 @@ public class MainMenu extends JPanel {
         if (nameDialog.isConfirmed()) {
             String playerName = nameDialog.getPlayerName();
             System.out.println("Player name: " + playerName);
-            // Store player name and show StartGamePanel transition
+            // Store player name and stop music before starting game
             this.playerName = playerName;
+            audioManager.fadeOutBackgroundMusic(2000); // Stop menu BGM before starting game
             showStartGameTransition();
         } else {
-            // User cancelled, fade back in the background music
-            audioManager.fadeInBackgroundMusic(1000, true);
+            // User cancelled, keep music playing (no action needed)
         }
     }
     

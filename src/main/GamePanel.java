@@ -28,18 +28,13 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
     private AudioManager audioManager;
-    private String playerName = "Player"; // Default player name
+    private String playerName; // Default player name
     private boolean heartbeatBleeding = false;
     // === Constructor ===
-    public GamePanel() {
-        this(new LevelManager(), "Player");
-    }
-    
-    public GamePanel(LevelManager levelManager) {
-        this(levelManager, "Player");
-    }
-    
     public GamePanel(LevelManager levelManager, String playerName) {
+        if (playerName == null || playerName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Player name must not be null or empty.");
+        }
         setPreferredSize(new Dimension(1200, 780));
         setBackground(Color.black);
         setFocusable(true);
@@ -48,6 +43,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         // Use provided level manager or create new one
         this.levelManager = levelManager;
         this.playerName = playerName;
+        System.out.println("GamePanel initialized with player name: " + this.playerName);
         // --- Audio setup ---
         audioManager = new AudioManager();
 
@@ -250,7 +246,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         
         // Create new GamePanel for the next level with the same level manager
         parentFrame.getContentPane().removeAll();
-        GamePanel nextLevelPanel = new GamePanel(levelManager);
+        GamePanel nextLevelPanel = new GamePanel(levelManager, playerName);
         parentFrame.add(nextLevelPanel);
         parentFrame.pack();
         parentFrame.revalidate();

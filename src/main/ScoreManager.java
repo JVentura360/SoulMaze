@@ -28,6 +28,7 @@ public class ScoreManager {
     }
     
     public static void saveScore(String playerName, int score) {
+        System.out.println("[DEBUG] ScoreManager.saveScore called with playerName='" + playerName + "' score=" + score);
         try {
             // Read existing scores
             List<PlayerScore> scores = loadScores();

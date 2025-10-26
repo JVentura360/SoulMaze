@@ -165,10 +165,10 @@ public class AudioManager {
                 bgVolumeControl.setValue(maxVolume);
 
             } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            e.printStackTrace();
+        }
         }).start();
-    }
-    
+}
+
     
 }
