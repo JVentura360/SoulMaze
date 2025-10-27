@@ -169,6 +169,31 @@ public class AudioManager {
         }
         }).start();
 }
+    
+    public void fadeOutSFX(String key, int durationMs) {
+        Clip clip = sfxMap.get(key); // assuming you store SFX clips in a HashMap
+        if (clip == null || !clip.isActive()) return;
+
+        new Thread(() -> {
+            try {
+                FloatControl volumeControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                float start = volumeControl.getValue();
+                float min = volumeControl.getMinimum();
+                int steps = 20;
+                int delay = durationMs / steps;
+
+                for (int i = 0; i < steps; i++) {
+                    float newValue = start - (i * (Math.abs(start - min) / steps));
+                    volumeControl.setValue(newValue);
+                    Thread.sleep(delay);
+                }
+
+                clip.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     
 }

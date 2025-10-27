@@ -180,11 +180,20 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     }
 
     private void handleGameOver() {
+    	audioManager.fadeOutBackgroundMusic(2000);
+        // Stop both heartbeats
+        audioManager.fadeOutSFX("heartbeatNormal",1000);
+        audioManager.fadeOutSFX("heartbeatFast",1000);
         gameOver = true;
         running = false; // stop the loop if you want
-        // Stop both heartbeats
-        audioManager.stopSFX("heartbeatNormal");
-        audioManager.stopSFX("heartbeatFast");
+        if (gameThread != null && gameThread.isAlive()) {
+            try {
+                gameThread.join(100); // wait up to 0.1s for it to end cleanly
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         // Save the player's score
         int finalScore = levelManager.getScore();
         ScoreManager.saveScore(playerName, finalScore);
@@ -193,12 +202,18 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         if (audioManager != null) {
             audioManager.fadeOutBackgroundMusic(2000); // fade out over 2 seconds
         }
-        audioManager.stopSFX("heartbeatNormal");
+        // Stop both heartbeats
+        audioManager.fadeOutSFX("heartbeatNormal",2000);
+        audioManager.fadeOutSFX("heartbeatFast",2000);
 
         // Show custom Game Over Panel
         JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         GameOverPanel.GameOverListener listener = new GameOverPanel.GameOverListener() {
+        	
             public void onRetry() {
+            	// Stop both heartbeats
+                audioManager.fadeOutSFX("heartbeatNormal",2000);
+                audioManager.fadeOutSFX("heartbeatFast",2000);
                 // Restart game with same LevelManager and playerName
                 parentFrame.getContentPane().removeAll();
                 GamePanel retryPanel = new GamePanel(levelManager, playerName);
@@ -249,9 +264,10 @@ SwingUtilities.invokeLater(() -> {
     private void handleLevelCompletion() {
         levelCompleted = true;
         levelManager.addScore(100); // Bonus points for completing level
-        // Stop both heartbeats first
-        audioManager.stopSFX("heartbeatNormal");
-        audioManager.stopSFX("heartbeatFast");
+        // Stop both heartbeats
+        audioManager.fadeOutBackgroundMusic(2000);
+        audioManager.fadeOutSFX("heartbeatNormal",2000);
+        audioManager.fadeOutSFX("heartbeatFast",2000);
         
         // Check if game is completed
         if (levelManager.isGameCompleted()) {
@@ -326,11 +342,6 @@ SwingUtilities.invokeLater(() -> {
             grave.draw(g);
         }
         player.draw(g);
-        for (Soul s : souls) {
-            s.update();
-            s.draw(g);
-        }
-        
         
         // === Draw fog overlay ===
         drawFog(g);
@@ -349,7 +360,7 @@ SwingUtilities.invokeLater(() -> {
         }
                 Graphics2D g2 = (Graphics2D) g;
 
-        g2.setFont(new Font("Serif", Font.BOLD, 20));
+        g2.setFont(new Font("Chiller", Font.BOLD, 20));
 
         // Bloody red gradient
         GradientPaint gp = new GradientPaint(0, 0, Color.RED, 0, 50, Color.BLACK, true);
@@ -359,8 +370,8 @@ SwingUtilities.invokeLater(() -> {
         g2.drawString("Score: " + levelManager.getScore(), 20, 30);
         g2.drawString(levelManager.getLevelDescription(), 20, 50);
         g2.setColor(Color.RED);
-        g2.drawString("Score: " + levelManager.getScore(), 18, 28);
-        g2.drawString(levelManager.getLevelDescription(), 18, 48);
+        g2.drawString("Score: " + levelManager.getScore(), 19, 29);
+        g2.drawString(levelManager.getLevelDescription(), 19, 49);
         
  
 
@@ -490,13 +501,14 @@ SwingUtilities.invokeLater(() -> {
     }
     
     private void updateHeartbeat() {
+    	if (gameOver || levelCompleted) return;
         boolean shouldBeBleeding = player.isBleeding();
 
         if (shouldBeBleeding != heartbeatBleeding) {
             // State changed: switch heartbeat
             heartbeatBleeding = shouldBeBleeding;
 
-            // Stop both heartbeats first
+         // Stop both heartbeats
             audioManager.stopSFX("heartbeatNormal");
             audioManager.stopSFX("heartbeatFast");
 
