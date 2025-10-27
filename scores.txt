@@ -1,6 +1,8 @@
 asd:200
+a:200
 Jhomar:150
 a:150
+awd:150
 jjjj:0
 ghggh:0
 kjlk:0
@@ -35,4 +37,8 @@ ad:0
 a:0
 a:0
 q:0
+a:0
+a:0
+asd:0
+asd:0
 a:0

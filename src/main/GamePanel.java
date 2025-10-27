@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.Timer;
 
 /**
  * GamePanel handles the main gameplay loop, drawing, and logic.
@@ -28,8 +29,12 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private int fogRadius = 180; // radius around player to clear
     private double fogPulse = 0;
     private AudioManager audioManager;
+    private Jumpscare jumpscare;
     private String playerName; // Default player name
     private boolean heartbeatBleeding = false;
+    private Point girlJumpscareSpot;
+    private long nextJumpscareTime;
+    private Random rand = new Random();
     // === Constructor ===
     public GamePanel(LevelManager levelManager, String playerName) {
         if (playerName == null || playerName.trim().isEmpty()) {
@@ -46,7 +51,9 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         System.out.println("GamePanel initialized with player name: " + this.playerName);
         // --- Audio setup ---
         audioManager = new AudioManager();
-
+        //jumpscare
+        jumpscare = new Jumpscare(audioManager, 3500);
+        jumpscare.attachToPanel(this);
         // Load BGM
         audioManager.loadBackgroundMusic("src/assets/Music/Gameplay.wav");
         audioManager.fadeInBackgroundMusic(2000, true); // loop gameplay BGM
@@ -61,8 +68,9 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         
         // Initialize core game objects
         initializeLevel();
-        
-
+     // Jumpscare setup
+        girlJumpscareSpot = maze.getRandomOpenTile();
+        scheduleNextJumpscare();
         
         // Start main game loop
         gameThread = new Thread(this);
@@ -78,7 +86,7 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         // Find spawn points from the maze
         Point playerSpawn = maze.getPlayerSpawn();
         Point ghostSpawn = maze.getGhostSpawn();
-
+        
         // Fallback defaults if not found
         if (playerSpawn == null) playerSpawn = new Point(640, 400);
         if (ghostSpawn == null) ghostSpawn = new Point(100, 100);
@@ -173,6 +181,19 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
         }
         
         updateHeartbeat();
+        
+        // --- Trigger girl jumpscare when player is near her spot ---
+        if (girlJumpscareSpot != null && !jumpscare.isActive()) {
+            double dx = player.x - girlJumpscareSpot.x;
+            double dy = player.y - girlJumpscareSpot.y;
+            double distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 80) { // 80 pixels detection range
+                jumpscare.trigger("girl");
+                scheduleNextJumpscare(); // move to a new random spot
+            }
+        }
+        
         // --- Check level completion ---
         if (levelManager.isLevelCompleted(graves)) {
             handleLevelCompletion();
@@ -275,18 +296,29 @@ SwingUtilities.invokeLater(() -> {
             gameOver = true;
             running = false;
         } else {
-            // Show level up transition when advancing to levels 2-18
-            if (levelManager.getCurrentLevel() == 1) {
-                // We're completing level 1, so show transition before going to level 2
- 
-                showLevelUpTransition();
-            } else {
-                // For other levels, show transition
- 
-                showLevelUpTransition();
-            }
+        	// Show level up transition when advancing to levels 2-18
+        	if (levelManager.getCurrentLevel() == 1) {
+        	    if (rand.nextFloat() < 1.0f) {
+        	        System.out.println("🎃 Triggering Smile Jumpscare instead of level up panel!");
+
+        	        // Wait for jumpscare to finish before transition
+        	        jumpscare.setOnFinish(() -> {
+        	            System.out.println("😈 Jumpscare finished — proceeding to level up transition!");
+        	            SwingUtilities.invokeLater(this::showLevelUpTransition);
+        	        });
+
+        	        jumpscare.trigger("smile");
+        	        return; // prevent transition from running immediately
+        	    }
+
+        	    // No jumpscare triggered, continue as normal
+        	    showLevelUpTransition();
+        	} else {
+        	    showLevelUpTransition();
+        	}
         }
     }
+    
     
     private void showLevelUpTransition() {
         // Stop the game loop temporarily
@@ -373,15 +405,23 @@ SwingUtilities.invokeLater(() -> {
         g2.drawString("Score: " + levelManager.getScore(), 19, 29);
         g2.drawString(levelManager.getLevelDescription(), 19, 49);
         
- 
+        if (girlJumpscareSpot != null) {
+            g.setColor(Color.PINK); // or Color.RED for visibility
+            int size = 20;
+            g.fillOval(girlJumpscareSpot.x - size / 2, girlJumpscareSpot.y - size / 2, size, size);
 
+            g.setColor(Color.WHITE);
+            g.drawString("GIRL", girlJumpscareSpot.x - 10, girlJumpscareSpot.y - 10);
+        }
+ 
+        jumpscare.draw(g, getWidth(), getHeight());
     }
 
     // === Input Handling ===
     @Override
     public void keyPressed(KeyEvent e) {
         player.keyPressed(e);
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             handleSoulInteraction();
         }
     }
@@ -514,6 +554,10 @@ SwingUtilities.invokeLater(() -> {
 
             // Play correct heartbeat loop
             if (heartbeatBleeding) {
+            	// === Trigger skull jumpscare once when bleeding starts ===
+                if (!jumpscare.isActive()) {
+                    jumpscare.trigger("skull");
+                }
                 audioManager.playSFX("heartbeatFast", true);
             } else {
                 audioManager.playSFX("heartbeatNormal", true);
@@ -523,19 +567,49 @@ SwingUtilities.invokeLater(() -> {
         }
     }
     
-    // === Reset Game (optional, for restart) ===
-    private void resetGame() {
-        gameOver = false;
-        player.x = 640;
-        player.y = 420;
-        player.stop();
-        running = true;
-        requestFocusInWindow();
+ // Schedule the next jumpscare and pick a centered open spot
+    private void scheduleNextJumpscare() {
+        long now = System.currentTimeMillis();
+        long delay = 30000 + rand.nextInt(30000); // 30–60 seconds
+        nextJumpscareTime = now + delay;
 
-        // Restart loop if needed
-        if (gameThread == null || !gameThread.isAlive()) {
-            gameThread = new Thread(this);
-            gameThread.start();
+        girlJumpscareSpot = getCentralOpenTile();
+    }
+
+    // Picks an open tile with space on all sides (not touching walls)
+    private Point getCentralOpenTile() {
+        int attempts = 0;
+        while (attempts < 1000) {
+            Point p = maze.getRandomOpenTile();
+            int row = p.y / maze.tileSize;
+            int col = p.x / maze.tileSize;
+
+            // Check surrounding tiles to ensure it's not near walls
+            boolean safe = true;
+            for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                    if (maze.isWall(row + dr, col + dc)) {
+                        safe = false;
+                        break;
+                    }
+                }
+                if (!safe) break;
+            }
+
+            if (safe) {
+                // Offset to the center of the tile
+                return new Point(col * maze.tileSize + maze.tileSize / 2,
+                                 row * maze.tileSize + maze.tileSize / 2);
+            }
+
+            attempts++;
         }
+
+        // fallback (should rarely happen)
+        return maze.getRandomOpenTile();
+    }
+    
+    private int durationAfterJumpscare() {
+        return 3500; // milliseconds (same duration as your jumpscare)
     }
 }

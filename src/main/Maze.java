@@ -1,6 +1,7 @@
 package main;
 import java.awt.*;
 import javax.swing.ImageIcon;
+import java.util.Random;
 
 public class Maze {
     public int tileSize = 10; // each tile = 32 pixels
@@ -155,6 +156,18 @@ public class Maze {
             }
         }
         return null;
+    }
+    
+    public Point getRandomOpenTile() {
+        Random rand = new Random();
+        while (true) {
+            int row = rand.nextInt(mazeData.length);
+            int col = rand.nextInt(mazeData[0].length());
+            // ensure it's not a wall
+            if (!isWall(row, col)) {
+                return new Point(col * tileSize, row * tileSize);
+            }
+        }
     }
     
 }
