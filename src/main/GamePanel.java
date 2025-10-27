@@ -182,7 +182,9 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     private void handleGameOver() {
         gameOver = true;
         running = false; // stop the loop if you want
-        
+        // Stop both heartbeats
+        audioManager.stopSFX("heartbeatNormal");
+        audioManager.stopSFX("heartbeatFast");
         // Save the player's score
         int finalScore = levelManager.getScore();
         ScoreManager.saveScore(playerName, finalScore);
@@ -247,6 +249,9 @@ SwingUtilities.invokeLater(() -> {
     private void handleLevelCompletion() {
         levelCompleted = true;
         levelManager.addScore(100); // Bonus points for completing level
+        // Stop both heartbeats first
+        audioManager.stopSFX("heartbeatNormal");
+        audioManager.stopSFX("heartbeatFast");
         
         // Check if game is completed
         if (levelManager.isGameCompleted()) {
@@ -311,7 +316,6 @@ SwingUtilities.invokeLater(() -> {
         super.paintComponent(g);
 
         maze.draw(g);
-        player.draw(g);
         
         // Draw all ghosts
         for (Ghost ghost : ghosts) {
@@ -321,16 +325,12 @@ SwingUtilities.invokeLater(() -> {
         for (Grave grave : graves) {
             grave.draw(g);
         }
+        player.draw(g);
         for (Soul s : souls) {
             s.update();
             s.draw(g);
         }
         
-        // Draw UI
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 16));
-        g.drawString("Score: " + levelManager.getScore(), 20, 30);
-        g.drawString(levelManager.getLevelDescription(), 20, 50);
         
         // === Draw fog overlay ===
         drawFog(g);
@@ -347,7 +347,22 @@ SwingUtilities.invokeLater(() -> {
             s.update();
             s.draw(g);
         }
+                Graphics2D g2 = (Graphics2D) g;
+
+        g2.setFont(new Font("Serif", Font.BOLD, 20));
+
+        // Bloody red gradient
+        GradientPaint gp = new GradientPaint(0, 0, Color.RED, 0, 50, Color.BLACK, true);
+        g2.setPaint(gp);
+
+        // Add shadow for creepiness
+        g2.drawString("Score: " + levelManager.getScore(), 20, 30);
+        g2.drawString(levelManager.getLevelDescription(), 20, 50);
+        g2.setColor(Color.RED);
+        g2.drawString("Score: " + levelManager.getScore(), 18, 28);
+        g2.drawString(levelManager.getLevelDescription(), 18, 48);
         
+ 
 
     }
 

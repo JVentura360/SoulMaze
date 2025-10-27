@@ -259,28 +259,6 @@ public class Ghost {
             g.fillRect(x, y, size, size);
         }
 
-        // Visualize path
-        if (pathRow != null && pathCol != null) {
-            g.setColor(Color.CYAN);
-            for (int i = 0; i < pathRow.length; i++) {
-                int cx = pathCol[i] * maze.tileSize + maze.tileSize / 2;
-                int cy = pathRow[i] * maze.tileSize + maze.tileSize / 2;
-                g.fillOval(cx - 3, cy - 3, 6, 6);
-
-                if (i > 0) {
-                    int px = pathCol[i - 1] * maze.tileSize + maze.tileSize / 2;
-                    int py = pathRow[i - 1] * maze.tileSize + maze.tileSize / 2;
-                    g.drawLine(px, py, cx, cy);
-                }
-            }
-            // mark current target
-            if (pathIndex < pathRow.length) {
-                g.setColor(Color.MAGENTA);
-                int tx = pathCol[pathIndex] * maze.tileSize + maze.tileSize / 2;
-                int ty = pathRow[pathIndex] * maze.tileSize + maze.tileSize / 2;
-                g.fillOval(tx - 5, ty - 5, 10, 10);
-            }
-        }
     }
     
     public static Grave spawnRandom(Maze maze, List<Grave> existingGraves, Color color) {
