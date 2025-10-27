@@ -201,41 +201,42 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
     }
 
     private void handleGameOver() {
-    	audioManager.fadeOutBackgroundMusic(2000);
-        // Stop both heartbeats
-        audioManager.fadeOutSFX("heartbeatNormal",1000);
-        audioManager.fadeOutSFX("heartbeatFast",1000);
-        gameOver = true;
-        running = false; // stop the loop if you want
-        if (gameThread != null && gameThread.isAlive()) {
-            try {
-                gameThread.join(100); // wait up to 0.1s for it to end cleanly
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    // --- Fade out sounds ---
+    audioManager.fadeOutBackgroundMusic(2000);
+    audioManager.fadeOutSFX("heartbeatNormal", 1000);
+    audioManager.fadeOutSFX("heartbeatFast", 1000);
 
-        // Save the player's score
-        int finalScore = levelManager.getScore();
-        ScoreManager.saveScore(playerName, finalScore);
-        System.out.println("Game Over! Final score for " + playerName + ": " + finalScore);
-        
-        if (audioManager != null) {
-            audioManager.fadeOutBackgroundMusic(2000); // fade out over 2 seconds
-        }
-        // Stop both heartbeats
-        audioManager.fadeOutSFX("heartbeatNormal",2000);
-        audioManager.fadeOutSFX("heartbeatFast",2000);
+    gameOver = true;
+    running = false;
 
-        // Show custom Game Over Panel
+    if (gameThread != null && gameThread.isAlive()) {
+        try {
+            gameThread.join(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // --- Save player score ---
+    int finalScore = levelManager.getScore();
+    ScoreManager.saveScore(playerName, finalScore);
+    System.out.println("Game Over! Final score for " + playerName + ": " + finalScore);
+
+    // --- Show Game Over Sequence ---
+    SwingUtilities.invokeLater(() -> {
         JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        GameOverPanel.GameOverListener listener = new GameOverPanel.GameOverListener() {
-        	
+        if (parentFrame == null) {
+            System.out.println("handleGameOver: parentFrame is null");
+            return;
+        }
+
+        // Use your existing GameOverSequence class
+        GameOverSequence.show(parentFrame, new GameOverPanel.GameOverListener() {
+            @Override
             public void onRetry() {
-            	// Stop both heartbeats
-                audioManager.fadeOutSFX("heartbeatNormal",2000);
-                audioManager.fadeOutSFX("heartbeatFast",2000);
-                // Restart game with same LevelManager and playerName
+                audioManager.fadeOutSFX("heartbeatNormal", 1000);
+                audioManager.fadeOutSFX("heartbeatFast", 1000);
+
                 parentFrame.getContentPane().removeAll();
                 GamePanel retryPanel = new GamePanel(levelManager, playerName);
                 parentFrame.add(retryPanel);
@@ -244,8 +245,9 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
                 parentFrame.repaint();
                 retryPanel.requestFocusInWindow();
             }
+
+            @Override
             public void onQuit() {
-                // Return to MainMenu
                 parentFrame.getContentPane().removeAll();
                 MainMenu menuPanel = new MainMenu(parentFrame);
                 parentFrame.add(menuPanel);
@@ -253,33 +255,36 @@ public class GamePanel extends JPanel implements KeyListener, Runnable {
                 parentFrame.revalidate();
                 parentFrame.repaint();
             }
-        };
+        });
+    });
+
         // ...existing code...
 SwingUtilities.invokeLater(() -> {
-    JFrame parentFrame1 = (JFrame) SwingUtilities.getWindowAncestor(this);
-    if (parentFrame == null) {
-        System.out.println("handleGameOver: parentFrame is null");
-        return;
+    JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+GameOverPanel.GameOverListener listener = new GameOverPanel.GameOverListener() {
+    public void onRetry() {
+        parentFrame.getContentPane().removeAll();
+        GamePanel retryPanel = new GamePanel(levelManager, playerName);
+        parentFrame.add(retryPanel);
+        parentFrame.pack();
+        parentFrame.revalidate();
+        parentFrame.repaint();
+        retryPanel.requestFocusInWindow();
     }
 
-    // Create the overlay panel
-    GameOverPanel overlay = new GameOverPanel(listener);
+    public void onQuit() {
+        parentFrame.getContentPane().removeAll();
+        MainMenu menuPanel = new MainMenu(parentFrame);
+        parentFrame.add(menuPanel);
+        parentFrame.pack();
+        parentFrame.revalidate();
+        parentFrame.repaint();
+    }
+};
 
-    // Get the glass pane and set its layout
-    JPanel glassPane = (JPanel) parentFrame1.getGlassPane();
-    glassPane.setLayout(new GridLayout(1, 1));
-    glassPane.removeAll(); // Clear previous components
-    glassPane.add(overlay);
-
-    // Make the glass pane visible
-    glassPane.setVisible(true);
-
-    // Revalidate and repaint to show the overlay
-    parentFrame1.revalidate();
-    parentFrame1.repaint();
+// Show 9-second GIF + SFX before showing the GameOverPanel
+GameOverSequence.show(parentFrame, listener);
 });
-
-        
     }
     
     private void handleLevelCompletion() {
