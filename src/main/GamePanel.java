@@ -405,14 +405,7 @@ SwingUtilities.invokeLater(() -> {
         g2.drawString("Score: " + levelManager.getScore(), 19, 29);
         g2.drawString(levelManager.getLevelDescription(), 19, 49);
         
-        if (girlJumpscareSpot != null) {
-            g.setColor(Color.PINK); // or Color.RED for visibility
-            int size = 20;
-            g.fillOval(girlJumpscareSpot.x - size / 2, girlJumpscareSpot.y - size / 2, size, size);
-
-            g.setColor(Color.WHITE);
-            g.drawString("GIRL", girlJumpscareSpot.x - 10, girlJumpscareSpot.y - 10);
-        }
+       
  
         jumpscare.draw(g, getWidth(), getHeight());
     }
@@ -424,6 +417,7 @@ SwingUtilities.invokeLater(() -> {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             handleSoulInteraction();
         }
+        
     }
 
     @Override
